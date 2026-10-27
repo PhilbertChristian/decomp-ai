@@ -47,67 +47,70 @@ document.querySelectorAll(".copy[data-copy]").forEach((b) =>
   b.addEventListener("click", () => copyText(b.dataset.copy, b))
 );
 const setupCmd = document.getElementById("setup-cmd");
-document.getElementById("setup-copy").addEventListener("click", (e) => copyText(setupCmd.textContent, e.currentTarget));
-document.querySelectorAll(".stab").forEach((b) =>
-  b.addEventListener("click", () => {
-    document.querySelectorAll(".stab").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    setupCmd.textContent = b.dataset.cmd;
-  })
-);
+if (setupCmd) {
+  document.getElementById("setup-copy").addEventListener("click", (e) => copyText(setupCmd.textContent, e.currentTarget));
+  document.querySelectorAll(".stab").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".stab").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      setupCmd.textContent = b.dataset.cmd;
+    })
+  );
+}
 
 // ---------- Demo comparison ----------
 const TASKS = {
   enrich: {
-    prompt: "Enrich jane@northwind.io for our CRM",
+    prompt: "Enrich Northwind AI — replied \"send more info\"",
     calls: [
-      { fn: "linkedin.findProfile", rows: [["Jane Park", "VP Revenue Ops"], ["Seniority", "VP"], ["Tenure", "2y 4m"]] },
-      { fn: "crunchbase.getOrganization", rows: [["Northwind Labs", "Series B"], ["Headcount", "201–500"], ["Raised", "$58M"]] },
-      { fn: "builtwith.getTechStack", rows: [["CRM", "Salesforce"], ["Outreach", "Outreach.io"]] },
+      { fn: "pipedrive.getDeal", rows: [["Northwind AI", "Stage: Replied"], ["Contact", "Maya Chen"]] },
+      { fn: "linkedin.getProfile", rows: [["Maya Chen", "Head of DevRel"], ["Focus", "Developer community"]] },
+      { fn: "crunchbase.getOrganization", rows: [["Series B", "$42M · 2026"], ["Headcount", "120"]] },
+      { fn: "news.search", rows: [["Launched agent SDK", "6 days ago"]] },
     ],
-    answer: "Done — Jane Park, VP RevOps at Northwind Labs (Series B, 201–500). Synced 14 fields to Salesforce.",
-    good: { tokens: 1240, cost: 0.02, secs: 2.1 },
-    bad: { tokens: 61200, cost: 1.04, time: "4:12" },
-    browser: ["Opening google.com", "Searching \"Jane Park Northwind\"", "Opening linkedin.com", "Login wall — signing in", "Scrolling profile", "Copying experience section", "Opening crunchbase.com", "Dismissing paywall modal", "Reading funding table", "Opening northwind.io", "Viewing page source"],
-    fail: "Rate limited by LinkedIn…",
-  },
-  company: {
-    prompt: "Give me a brief on acme.com before my call",
-    calls: [
-      { fn: "website.getAbout", rows: [["Acme Corp", "B2B logistics"], ["HQ", "Austin, TX"]] },
-      { fn: "crunchbase.listFundingRounds", rows: [["Series C", "$80M · Mar 2026"], ["Series B", "$31M · 2024"]] },
-      { fn: "news.search", rows: [["Acme opens EU hub", "2 days ago"]] },
-    ],
-    answer: "Acme is a Series C logistics platform (Austin). Raised $80M in March; just expanded to the EU.",
-    good: { tokens: 1580, cost: 0.03, secs: 2.6 },
-    bad: { tokens: 48900, cost: 0.86, time: "3:41" },
-    browser: ["Opening acme.com", "Accepting cookie banner", "Clicking About", "Reading page", "Opening crunchbase.com", "Searching \"Acme\"", "Picking wrong Acme", "Going back", "Picking Acme Corp", "Opening news search"],
-    fail: "Verify you're human…",
+    answer: "Enriched and written back to the Pipedrive deal: DevRel buyer, Series B, fresh SDK launch → strong workshop fit.",
+    good: { tokens: 1420, cost: 0.02, secs: 2.4 },
+    bad: { tokens: 58300, cost: 1.02, time: "14:30" },
+    browser: ["Opening Pipedrive", "Finding the deal", "Copying contact name", "Searching LinkedIn", "Login wall — signing in", "Reading profile", "Opening Crunchbase", "Paywall on funding", "Googling news", "Pasting notes into deal"],
+    fail: "Still no ICP match written…",
   },
   email: {
-    prompt: "Find the work email for Tom Reyes at Bluefin",
+    prompt: "Draft phase-two email for Northwind AI",
     calls: [
-      { fn: "website.getTeamPage", rows: [["Tom Reyes", "Head of Growth"]] },
-      { fn: "email.inferPattern", rows: [["Pattern", "first.last@bluefin.co"], ["Confidence", "94%"]] },
-      { fn: "email.verify", rows: [["tom.reyes@bluefin.co", "deliverable ✓"]] },
+      { fn: "enrich.getLead", rows: [["Hook", "Agent SDK launch"], ["Audience match", "AI infra engineers"]] },
+      { fn: "compose.phaseTwoEmail", rows: [["Subject", "Northwind × SuperOptimal"], ["Pricing", "omitted ✓"], ["CTA", "Pipedrive booking link"]] },
     ],
-    answer: "tom.reyes@bluefin.co — verified deliverable (94% pattern confidence).",
-    good: { tokens: 980, cost: 0.01, secs: 1.8 },
-    bad: { tokens: 39300, cost: 0.71, time: "2:58" },
-    browser: ["Opening bluefin.co", "Clicking Team", "Scrolling", "Opening contact page", "Reading footer", "Searching github.com", "Opening commits", "Guessing pattern"],
-    fail: "Could not verify address",
+    answer: "Draft ready in Gmail: personalised to the SDK launch, links the sponsor page, asks for a 20-min call.",
+    good: { tokens: 1180, cost: 0.02, secs: 1.9 },
+    bad: { tokens: 41200, cost: 0.74, time: "11:05" },
+    browser: ["Rereading their reply", "Opening company site", "Skimming blog", "Finding the launch post", "Opening template doc", "Rewriting intro", "Checking audience stats", "Pasting link"],
+    fail: "Forgot to remove pricing line",
   },
-  hiring: {
-    prompt: "Which of my 50 target accounts are hiring SDRs?",
+  luma: {
+    prompt: "Build a Luma sponsor page for Northwind AI",
     calls: [
-      { fn: "greenhouse.listJobs × 50", rows: [["Accounts scanned", "50"], ["Open SDR roles", "17"]] },
-      { fn: "linkedin.searchJobs", rows: [["Posted < 14 days", "9 accounts"]] },
+      { fn: "events.pickSlot", rows: [["Date", "Thu Jan 15"], ["City", "SOMA, San Francisco"]] },
+      { fn: "compose.agenda", rows: [["Keynote", "Northwind agent SDK"], ["Format", "Hands-on workshop"]] },
+      { fn: "pages.publishSponsorPage", rows: [["URL", "/northwind"], ["Packages", "A single · B series"]] },
     ],
-    answer: "9 accounts posted SDR roles in the last 2 weeks. Tagged as 'Hiring signal' in HubSpot.",
-    good: { tokens: 3400, cost: 0.06, secs: 4.4 },
-    bad: { tokens: 212000, cost: 3.82, time: "18:20" },
-    browser: ["Opening careers page 1/50", "Reading listings", "Opening careers page 2/50", "Iframe not loading", "Opening careers page 3/50", "Reading listings", "Opening careers page 4/50"],
-    fail: "Context window full…",
+    answer: "Sponsor page live at superoptimal.events/northwind, with single-event and multi-city packages.",
+    good: { tokens: 2050, cost: 0.03, secs: 2.8 },
+    bad: { tokens: 66700, cost: 1.19, time: "42:10" },
+    browser: ["Opening Luma", "Duplicating old event", "Writing new title", "Designing cover in Canva", "Exporting image", "Uploading cover", "Writing agenda", "Adding audience section", "Fixing layout"],
+    fail: "Luma has no sponsor-package block…",
+  },
+  series: {
+    prompt: "Which replied leads should get the multi-city series pitch?",
+    calls: [
+      { fn: "pipedrive.listDeals", rows: [["Replied leads", "12"]] },
+      { fn: "enrich.batch × 12", rows: [["Multi-city hiring", "5"], ["Raised in last 6 mo", "7"]] },
+      { fn: "score.seriesFit", rows: [["Pitch series (SF → SEA → AUS → CHI)", "4 leads"]] },
+    ],
+    answer: "4 leads tagged \"Series pitch\" in Pipedrive; their sponsor pages lead with Package B.",
+    good: { tokens: 3900, cost: 0.06, secs: 4.2 },
+    bad: { tokens: 198000, cost: 3.55, time: "2:10:00" },
+    browser: ["Exporting deals to CSV", "Opening lead 1/12", "Checking careers page", "Opening lead 2/12", "Checking Crunchbase", "Opening lead 3/12", "Tab crashed"],
+    fail: "Gave up at lead 4 of 12",
   },
 };
 
@@ -147,8 +150,7 @@ function run(key) {
   timers.push(gi);
 
   // Browser agent side (sped-up replay)
-  const [mm, ss] = T.bad.time.split(":").map(Number);
-  const badTotal = mm * 60 + ss;
+  const badTotal = T.bad.time.split(":").map(Number).reduce((a, n) => a * 60 + n, 0);
   const replayMs = 9000;
   const all = [...T.browser, T.fail];
   all.forEach((s, i) => later(() => {
@@ -163,7 +165,8 @@ function run(key) {
   const bi = setInterval(() => {
     const p = Math.min((Date.now() - start) / replayMs, 1);
     const sec = Math.round(badTotal * p);
-    $("t-bad").textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = String(sec % 60).padStart(2, "0");
+    $("t-bad").textContent = h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
     if (p >= 1) clearInterval(bi);
   }, 100);
   timers.push(bi);
@@ -186,18 +189,18 @@ new IntersectionObserver((entries, obs) => {
 
 // ---------- Function marquee ----------
 const FNS = [
+  ["Pipedrive.listDeals()", 9, ["Pipedrive.getDeal()", "Pipedrive.updateDeal()", "Pipedrive.addNote()", "+6 more"]],
   ["LinkedIn.getProfile()", 12, ["LinkedIn.getCompany()", "LinkedIn.searchPeople()", "LinkedIn.searchJobs()", "+9 more"]],
-  ["Crunchbase.getOrganization()", 7, ["Crunchbase.listFundingRounds()", "Crunchbase.listInvestors()", "Crunchbase.getPerson()", "+4 more"]],
-  ["Apollo.searchContacts()", 5, ["Apollo.getAccount()", "Apollo.listSequences()", "+3 more"]],
-  ["GitHub.getOrg()", 6, ["GitHub.listMembers()", "GitHub.listRepos()", "GitHub.getProfile()", "+3 more"]],
-  ["BuiltWith.getTechStack()", 3, ["BuiltWith.listCustomers()", "BuiltWith.getSpend()"]],
-  ["Greenhouse.listJobs()", 2, ["Greenhouse.getJob()"]],
-  ["G2.getReviews()", 4, ["G2.getProduct()", "G2.listCompetitors()", "+2 more"]],
-  ["Website.getAbout()", 8, ["Website.getTeamPage()", "Website.getPricing()", "Website.getCareers()", "+5 more"]],
-  ["Google Maps.searchPlaces()", 11, ["Google Maps.getPlace()", "Google Maps.listReviews()", "+9 more"]],
-  ["Email.verify()", 3, ["Email.inferPattern()", "Email.findByName()"]],
-  ["SEC.getFilings()", 4, ["SEC.getOfficers()", "SEC.getFinancials()", "+2 more"]],
+  ["Crunchbase.getOrganization()", 7, ["Crunchbase.listFundingRounds()", "Crunchbase.listInvestors()", "+5 more"]],
+  ["Luma.getEvent()", 5, ["Luma.listHostEvents()", "Luma.getGuests()", "+3 more"]],
+  ["Website.getAbout()", 8, ["Website.getBlog()", "Website.getCareers()", "Website.getPricing()", "+5 more"]],
   ["News.search()", 2, ["News.getArticle()"]],
+  ["Gmail.listReplies()", 4, ["Gmail.createDraft()", "Gmail.getThread()", "+2 more"]],
+  ["GitHub.getOrg()", 6, ["GitHub.listRepos()", "GitHub.getReleases()", "+4 more"]],
+  ["Greenhouse.listJobs()", 2, ["Greenhouse.getJob()"]],
+  ["Sheets.appendRow()", 3, ["Sheets.getValues()", "Sheets.updateValues()"]],
+  ["ProductHunt.getLaunch()", 3, ["ProductHunt.listLaunches()", "ProductHunt.getMakers()"]],
+  ["Email.verify()", 3, ["Email.inferPattern()", "Email.findByName()"]],
 ];
 const card = ([main, n, rest]) =>
   `<div class="fn-card"><div class="top"><span class="main">${main}</span><span class="count">${n} fn</span></div><ul>${rest.map((r) => `<li>${r}</li>`).join("")}</ul></div>`;
@@ -208,12 +211,12 @@ fill("track2", FNS.slice(half));
 
 // ---------- How it works ----------
 const STEPS = [
-  ["Crawl", "A crawler exercises every feature of a site thousands of times, capturing the calls behind each one: REST, GraphQL, protobufs and websockets."],
-  ["Embed", "Every captured call becomes a node in a graph. Calls that work together are linked, and embeddings pull similar calls close together."],
-  ["Clean", "Analytics pings, ads and heartbeats belong to no feature. These outliers are dropped so only real feature calls remain."],
-  ["Circle", "An LLM draws a boundary around each cluster and names the feature it performs: getProfile, searchPeople, listJobs."],
-  ["Assemble", "For each cluster, an LLM writes one typed interface and fits the calls together into a single function."],
-  ["Run natively", "Finished functions ship in the Decomposition library and run natively in Node or Python — no browser at all."],
+  ["Pull replies", "Read every deal in the Pipedrive Sponsors pipeline that moved to \"Replied\" — the leads who asked for more info."],
+  ["Enrich", "Call typed functions across LinkedIn, Crunchbase, the company site and news to fill in buyer, stage and recent launches."],
+  ["Filter", "Drop leads that don't match an audience you can deliver, so effort goes where a sponsorship makes sense."],
+  ["Match", "Group leads by fit: single event vs. multi-city series, and which workshop theme lines up with what they just shipped."],
+  ["Compose", "Write the phase-two email and generate a Luma-style sponsor page with agenda, audience and packages — no pricing."],
+  ["Book", "The CTA is your Pipedrive scheduler, so every booked call lands back in Pipedrive as a record."],
 ];
 const graph = $("graph");
 const clusters = [[18, 30], [50, 60], [82, 35]];
@@ -228,7 +231,7 @@ const rings = clusters.map(([x, y], i) => {
   const r = document.createElement("div");
   r.className = "ring";
   r.style.cssText = `left:calc(${x}% - 60px);top:calc(${y}% - 60px);width:120px;height:120px`;
-  r.innerHTML = `<label>${["getProfile()", "searchPeople()", "listJobs()"][i]}</label>`;
+  r.innerHTML = `<label>${["single event", "series", "workshop theme"][i]}</label>`;
   graph.appendChild(r);
   return r;
 });
@@ -266,3 +269,12 @@ STEPS.forEach(([t], i) => {
 });
 showStep(0);
 stepTimer = setInterval(() => showStep((stepIdx + 1) % STEPS.length), 3500);
+
+// ---------- Booking CTA ----------
+// Replace with the real Pipedrive scheduler link.
+const BOOKING_URL = "https://pipedrive.com/scheduler/REPLACE-ME";
+document.querySelectorAll("[data-book]").forEach((a) => {
+  a.href = BOOKING_URL;
+  a.target = "_blank";
+  a.rel = "noopener";
+});

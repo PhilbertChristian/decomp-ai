@@ -191,3 +191,40 @@ details p { color: var(--muted); margin: 10px 0 0; }
   .install-pill { min-width: 0; width: calc(100% - 32px); }
   .ent { padding: 32px; }
 }
+
+/* pipeline kanban */
+.kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.kanban h4 { margin: 0 0 6px; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.kanban p { margin: 0 0 6px; font-size: 12.5px; background: #f6f5f1; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+.kanban p.hot { border-color: var(--accent); background: #f3fae6; }
+
+/* outputs */
+.outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; align-items: start; }
+.email { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.email-head { padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+.email-head .muted { display: inline-block; width: 60px; }
+.email-body { padding: 4px 18px 8px; font-size: 14.5px; }
+.pill-link { font-family: var(--mono); font-size: 13px; background: #f3fae6; color: var(--accent-dark); padding: 6px 10px; border-radius: 6px; }
+.email-tags { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); }
+.email-tags span { font-size: 11.5px; font-family: var(--mono); background: #f1f0eb; border-radius: 99px; padding: 3px 10px; color: var(--muted); }
+.luma { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.luma-cover { aspect-ratio: 16/8; background: radial-gradient(circle at 30% 30%, #c8f17a, #6cb200 45%, #1c3a00); display: flex; align-items: flex-end; padding: 20px; }
+.luma-cover-inner span { display: block; font-size: 12px; color: rgba(255,255,255,.8); margin-bottom: 4px; }
+.luma-cover-inner strong { font-size: 30px; line-height: 1.05; letter-spacing: -0.03em; color: #fff; font-weight: 500; }
+.luma-body { padding: 18px 20px 22px; }
+.luma-presented { font-size: 12.5px; color: var(--muted); }
+.luma-body h3 { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: 6px 0 14px; }
+.luma-body h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 6px; font-weight: 500; }
+.luma-body p { margin: 0; font-size: 14px; }
+.luma-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.luma-meta div { display: flex; flex-direction: column; font-size: 14px; }
+.luma-meta span { font-size: 12.5px; color: var(--muted); }
+.agenda { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.agenda li { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.agenda span { font-family: var(--mono); font-size: 12.5px; color: var(--muted); width: 40px; }
+.packages { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.packages div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.packages div.featured { border-color: var(--accent); background: #f3fae6; }
+.packages p { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.luma-cta { display: block; text-align: center; margin-top: 20px; }
+@media (max-width: 960px) { .outputs { grid-template-columns: 1fr; } }
