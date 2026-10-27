@@ -99,7 +99,7 @@ async function showSite(k) {
   $("cw-out").classList.remove("on");
   const body = $("cw-body");
   const chipStyle = `background:${s.color};color:${s.dark ? "#1c1c1a" : "#fff"}`;
-  body.innerHTML = `<div class="cline"><span class="g">$</span><span class="t">import { <span class="chip" style="${chipStyle}">${ICONS[k]}${s.key}</span> } from '@decomposition/web';</span></div>`;
+  body.innerHTML = `<div class="cline"><span class="g">$</span><span class="t">import { <span class="chip" style="${chipStyle}">${ICONS[k]}${s.key}</span> } from '@decompose/web';</span></div>`;
   for (const line of s.code) {
     if (run !== typingRun) return;
     const row = document.createElement("div");
@@ -270,7 +270,7 @@ async function race(i) {
     const scroll = $("g-chat").querySelector(".chat-scroll");
     const card = document.createElement("div");
     card.className = "chat-res";
-    card.innerHTML = `<div class="muted small">${T.fn} · Decomposition <span class="good-c">✓ 0.4s</span></div>` +
+    card.innerHTML = `<div class="muted small">${T.fn} · Decompose AI <span class="good-c">✓ 0.4s</span></div>` +
       T.rows.map(([a, b]) => `<b><span>${esc(a)}</span><span>${esc(b)}</span></b>`).join("");
     scroll.appendChild(card);
     await sleep(T.good.secs * 1000 * 0.45);
@@ -367,7 +367,7 @@ const STEPS = [
   ["Clean", "Some requests belong to no feature: analytics pings, ads and heartbeats. They're dropped, so only the real pieces of each feature remain."],
   ["Name", "An LLM draws a circle around each group and names the feature it performs: searchHotels, getTranscript, searchNearby."],
   ["Assemble", "For each group, the LLM writes one typed interface and fits its requests together into a single function, then tests it against the live site."],
-  ["Run natively", "The finished functions load into the Decomposition library and run natively in Node or Python, with no browser at all."],
+  ["Run natively", "The finished functions load into the Decompose library and run natively in Node or Python, with no browser at all."],
 ];
 const board = $("board"), disc = $("disc"), pad = $("pad");
 const CL = [[95, 110, "searchHotels()"], [205, 120, "getTranscript()"], [150, 215, "searchNearby()"]];
