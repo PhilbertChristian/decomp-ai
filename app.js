@@ -1,364 +1,480 @@
-// ---------- Hero background: animated concentric gradient rings ----------
-(() => {
-  const c = document.getElementById("hero-bg");
-  const ctx = c.getContext("2d");
-  let w, h, t = 0;
-  const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = c.clientWidth; h = c.clientHeight;
-    c.width = w * dpr; c.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
-  resize();
-  addEventListener("resize", resize);
-  const draw = () => {
-    t += 0.004;
-    ctx.fillStyle = "#efeee9";
-    ctx.fillRect(0, 0, w, h);
-    const cx = w / 2, cy = h / 2, R = Math.max(w, h) * 0.75;
-    for (let i = 14; i >= 0; i--) {
-      const r = (R * i) / 14 + Math.sin(t * 2 + i) * 8;
-      const hue = 95 + Math.sin(t + i * 0.5) * 40;
-      const light = 72 + (i % 2) * 14;
-      ctx.beginPath();
-      ctx.arc(cx + Math.sin(t + i) * 10, cy + Math.cos(t + i) * 10, Math.max(r, 1), 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${hue}, 70%, ${light}%, ${i < 4 ? 0.95 : 0.55})`;
-      ctx.fill();
-    }
-    // soft centre for legibility
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.42);
-    g.addColorStop(0, "rgba(239,238,233,1)");
-    g.addColorStop(0.6, "rgba(239,238,233,.85)");
-    g.addColorStop(1, "rgba(239,238,233,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    requestAnimationFrame(draw);
-  };
-  draw();
-})();
-
-// ---------- Copy buttons ----------
-const copyText = async (text, btn) => {
-  try { await navigator.clipboard.writeText(text); } catch {}
-  const prev = btn.textContent; btn.textContent = "✓";
-  setTimeout(() => (btn.textContent = prev), 1200);
-};
-document.querySelectorAll(".copy[data-copy]").forEach((b) =>
-  b.addEventListener("click", () => copyText(b.dataset.copy, b))
-);
-const setupCmd = document.getElementById("setup-cmd");
-if (setupCmd) {
-  document.getElementById("setup-copy").addEventListener("click", (e) => copyText(setupCmd.textContent, e.currentTarget));
-  document.querySelectorAll(".stab").forEach((b) =>
-    b.addEventListener("click", () => {
-      document.querySelectorAll(".stab").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-      setupCmd.textContent = b.dataset.cmd;
-    })
-  );
-}
-
-// ---------- Demo comparison ----------
-const TASKS = {
-  enrich: {
-    prompt: "Enrich Northwind AI — replied \"send more info\"",
-    calls: [
-      { fn: "pipedrive.getDeal", rows: [["Northwind AI", "Stage: Replied"], ["Contact", "Maya Chen"]] },
-      { fn: "linkedin.getProfile", rows: [["Maya Chen", "Head of DevRel"], ["Focus", "Developer community"]] },
-      { fn: "crunchbase.getOrganization", rows: [["Series B", "$42M · 2026"], ["Headcount", "120"]] },
-      { fn: "news.search", rows: [["Launched agent SDK", "6 days ago"]] },
-    ],
-    answer: "Enriched and written back to the Pipedrive deal: DevRel buyer, Series B, fresh SDK launch → strong workshop fit.",
-    good: { tokens: 1420, cost: 0.02, secs: 2.4 },
-    bad: { tokens: 58300, cost: 1.02, time: "14:30" },
-    browser: ["Opening Pipedrive", "Finding the deal", "Copying contact name", "Searching LinkedIn", "Login wall — signing in", "Reading profile", "Opening Crunchbase", "Paywall on funding", "Googling news", "Pasting notes into deal"],
-    fail: "Still no ICP match written…",
-  },
-  email: {
-    prompt: "Draft phase-two email for Northwind AI",
-    calls: [
-      { fn: "enrich.getLead", rows: [["Hook", "Agent SDK launch"], ["Audience match", "AI infra engineers"]] },
-      { fn: "compose.phaseTwoEmail", rows: [["Subject", "Northwind × SuperOptimal"], ["Pricing", "omitted ✓"], ["CTA", "Pipedrive booking link"]] },
-    ],
-    answer: "Draft ready in Gmail: personalised to the SDK launch, links the sponsor page, asks for a 20-min call.",
-    good: { tokens: 1180, cost: 0.02, secs: 1.9 },
-    bad: { tokens: 41200, cost: 0.74, time: "11:05" },
-    browser: ["Rereading their reply", "Opening company site", "Skimming blog", "Finding the launch post", "Opening template doc", "Rewriting intro", "Checking audience stats", "Pasting link"],
-    fail: "Forgot to remove pricing line",
-  },
-  luma: {
-    prompt: "Build a Luma sponsor page for Northwind AI",
-    calls: [
-      { fn: "events.pickSlot", rows: [["Date", "Thu Jan 15"], ["City", "SOMA, San Francisco"]] },
-      { fn: "compose.agenda", rows: [["Keynote", "Northwind agent SDK"], ["Format", "Hands-on workshop"]] },
-      { fn: "pages.publishSponsorPage", rows: [["URL", "/northwind"], ["Packages", "A single · B series"]] },
-    ],
-    answer: "Sponsor page live at superoptimal.events/northwind, with single-event and multi-city packages.",
-    good: { tokens: 2050, cost: 0.03, secs: 2.8 },
-    bad: { tokens: 66700, cost: 1.19, time: "42:10" },
-    browser: ["Opening Luma", "Duplicating old event", "Writing new title", "Designing cover in Canva", "Exporting image", "Uploading cover", "Writing agenda", "Adding audience section", "Fixing layout"],
-    fail: "Luma has no sponsor-package block…",
-  },
-  series: {
-    prompt: "Which replied leads should get the multi-city series pitch?",
-    calls: [
-      { fn: "pipedrive.listDeals", rows: [["Replied leads", "12"]] },
-      { fn: "enrich.batch × 12", rows: [["Multi-city hiring", "5"], ["Raised in last 6 mo", "7"]] },
-      { fn: "score.seriesFit", rows: [["Pitch series (SF → SEA → AUS → CHI)", "4 leads"]] },
-    ],
-    answer: "4 leads tagged \"Series pitch\" in Pipedrive; their sponsor pages lead with Package B.",
-    good: { tokens: 3900, cost: 0.06, secs: 4.2 },
-    bad: { tokens: 198000, cost: 3.55, time: "2:10:00" },
-    browser: ["Exporting deals to CSV", "Opening lead 1/12", "Checking careers page", "Opening lead 2/12", "Checking Crunchbase", "Opening lead 3/12", "Tab crashed"],
-    fail: "Gave up at lead 4 of 12",
-  },
-};
-
 const $ = (id) => document.getElementById(id);
-let timers = [];
-const clear = () => { timers.forEach(clearTimeout); timers.forEach(clearInterval); timers = []; };
-const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-function run(key) {
-  clear();
-  const T = TASKS[key];
-  $("prompt-good").textContent = $("prompt-bad").textContent = T.prompt;
-  $("steps-good").innerHTML = $("steps-bad").innerHTML = "";
-  $("t-good").textContent = "0.0s"; $("t-bad").textContent = "0:00";
-  $("tok-good").textContent = $("tok-bad").textContent = "0 tokens · $0.00";
+// ---------------------------------------------------------------------------
+// Sites
+// ---------------------------------------------------------------------------
+const ICONS = {
+  youtube: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" fill="#fff"/><path d="M10 9l5 3-5 3z" fill="#e8141c"/></svg>',
+  amazon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V7a3 3 0 016 0v1"/></svg>',
+  expedia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V8M3 14h18v4M21 14v-2a3 3 0 00-3-3h-7v5"/><circle cx="7" cy="11" r="2"/></svg>',
+  calendly: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  maps: '<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z" fill="#fff"/><circle cx="12" cy="9" r="2.6" fill="#1a7f2e"/></svg>',
+};
 
-  // Decomposition side
-  const stepMs = (T.good.secs * 1000) / (T.calls.length + 1);
-  T.calls.forEach((c, i) => later(() => {
-    const el = document.createElement("div");
-    el.className = "call";
-    el.innerHTML = `<div class="ch"><span>${c.fn}()</span><span class="ok">✓ ${(stepMs / 1000).toFixed(1)}s</span></div>` +
-      c.rows.map(([a, b]) => `<div class="row"><span>${a}</span><b>${b}</b></div>`).join("");
-    $("steps-good").appendChild(el);
-  }, stepMs * (i + 1) * 0.9));
-  later(() => {
-    const a = document.createElement("div"); a.className = "answer"; a.textContent = T.answer;
-    $("steps-good").appendChild(a);
-    $("tok-good").textContent = `${T.good.tokens.toLocaleString()} tokens · $${T.good.cost.toFixed(2)}`;
-  }, T.good.secs * 1000);
-  const start = Date.now();
-  const gi = setInterval(() => {
-    const s = (Date.now() - start) / 1000;
-    if (s >= T.good.secs) { $("t-good").textContent = T.good.secs.toFixed(1) + "s"; clearInterval(gi); return; }
-    $("t-good").textContent = s.toFixed(1) + "s";
-  }, 50);
-  timers.push(gi);
+const SITES = {
+  youtube: {
+    name: "YouTube", key: "youtube", count: 28, bg: "linear-gradient(160deg,#ff2b2b,#e00000)", color: "#e8141c",
+    fns: ["search()", "getVideo()", "getTranscript()", "listComments()", "getChannel()", "createPlaylist()", "addToPlaylist()", "getPlaylist()", "listChannelVideos()", "getLiveChat()"],
+    code: ["", "const [top] = await youtube.search({", "  query: 'kyoto travel guide'", "});", "", "const t = await youtube.getTranscript(", "  top.id", ");"],
+    out: "→ transcript · 1,842 lines · 18:42 video · 0.6s",
+    json: "{ title: 'KYOTO — 3 perfect days', lines: 1842, … }",
+  },
+  amazon: {
+    name: "Amazon", key: "amazon", count: 15, bg: "linear-gradient(160deg,#232323,#050505)", color: "#131921",
+    fns: ["searchProducts()", "getProduct()", "listReviews()", "listDeals()", "listBestSellers()", "listVariations()", "listNewReleases()", "getSeller()"],
+    code: ["", "const bags = await amazon.searchProducts(", "  {", "    keywords: 'carry on luggage',", "    maxPrice: 150,", "    minRating: 4.5", "  }", ");"],
+    out: "→ 48 products · from $69.99 · 0.4s",
+    json: "[{ title: 'Hardside Spinner 22\"', price: 69.99, rating: 4.5 }, …]",
+  },
+  expedia: {
+    name: "Expedia", key: "expedia", count: 4, bg: "linear-gradient(160deg,#ffe14d,#ffc800)", color: "#ffc72c", dark: true,
+    fns: ["searchHotels()", "getHotel()", "getRooms()", "listReviews()"],
+    code: ["", "const stays = await expedia.searchHotels(", "  {", "    location: 'Kyoto',", "    checkIn: '2026-11-13',", "    checkOut: '2026-11-16'", "  }", ");"],
+    out: "→ 3 hotels · from $184/night · 0.4s",
+    json: "[{ name: 'Hyatt Place Kyoto', price: 184, rating: 4.4 }, …]",
+  },
+  calendly: {
+    name: "Calendly", key: "calendly", count: 4, bg: "linear-gradient(160deg,#1a6bff,#0040e0)", color: "#006bff",
+    fns: ["getAvailability()", "getEventTypes()", "getBookingForm()", "findProfiles()"],
+    code: ["", "const slots = await calendly.getAvailability(", "  {", "    profile: 'jane-park',", "    event: '30min',", "    date: '2026-11-03'", "  }", ");"],
+    out: "→ 6 open slots · next: Tue 2:00 PM · 0.3s",
+    json: "[{ start: '2026-11-03T14:00', duration: 30 }, …]",
+  },
+  maps: {
+    name: "Google Maps", key: "maps", count: 11, bg: "linear-gradient(160deg,#25a244,#0d7a26)", color: "#1a7f2e",
+    fns: ["searchPlaces()", "searchNearby()", "getPlace()", "getDirections()", "listReviews()", "listPhotos()", "suggestPlaces()", "geocodeAddress()", "reverseGeocode()"],
+    code: ["", "const cafes = await maps.searchNearby(", "  {", "    query: 'coffee',", "    near: 'Shibuya, Tokyo',", "    openNow: true", "  }", ");"],
+    out: "→ 12 places · 4.5★ avg · 0.3s",
+    json: "[{ name: 'Fuglen Tokyo', rating: 4.6, walk: '6 min' }, …]",
+  },
+};
+const ORDER = ["youtube", "amazon", "expedia", "calendly", "maps"];
 
-  // Browser agent side (sped-up replay)
-  const badTotal = T.bad.time.split(":").map(Number).reduce((a, n) => a * 60 + n, 0);
-  const replayMs = 9000;
-  const all = [...T.browser, T.fail];
-  all.forEach((s, i) => later(() => {
-    const el = document.createElement("div");
-    const last = i === all.length - 1;
-    el.className = "bstep" + (last ? " fail" : "");
-    el.innerHTML = `<span class="ic">${last ? "✕" : "✓"}</span>${s}`;
-    $("steps-bad").appendChild(el);
-    $("steps-bad").parentElement.scrollTop = 1e6;
-    if (last) $("tok-bad").textContent = `${T.bad.tokens.toLocaleString()} tokens · $${T.bad.cost.toFixed(2)}`;
-  }, (replayMs / all.length) * (i + 1)));
-  const bi = setInterval(() => {
-    const p = Math.min((Date.now() - start) / replayMs, 1);
-    const sec = Math.round(badTotal * p);
-    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = String(sec % 60).padStart(2, "0");
-    $("t-bad").textContent = h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
-    if (p >= 1) clearInterval(bi);
-  }, 100);
-  timers.push(bi);
-}
-
-let current = "enrich";
-document.querySelectorAll(".tab").forEach((b) =>
-  b.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    current = b.dataset.task;
-    run(current);
+// ---------------------------------------------------------------------------
+// Hero: fanned cards
+// ---------------------------------------------------------------------------
+const FAN = [
+  { k: "youtube", x: -530, y: 0, r: -5, z: 1 },
+  { k: "amazon", x: -335, y: 45, r: 2, z: 2 },
+  { k: "expedia", x: -125, y: 85, r: -2, z: 3 },
+  { k: "calendly", x: 95, y: 30, r: 3, z: 2 },
+  { k: "maps", x: 290, y: 70, r: -4, z: 3 },
+];
+$("fan").innerHTML = FAN.map(({ k, x, y, r, z }) => {
+  const s = SITES[k];
+  const shown = s.fns.slice(0, Math.min(10, s.fns.length));
+  const more = s.count - shown.length;
+  return `<button class="scard ${s.dark ? "dark-text" : ""}" data-site="${k}"
+    style="left:calc(50% + ${x}px);top:${y}px;z-index:${z};background:${s.bg};--rest:rotate(${r}deg);transform:rotate(${r}deg)">
+    <div class="cap"><span>${s.count} capabilities</span>${ICONS[k]}</div>
+    <div class="name">${s.name}</div>
+    <ul>${shown.map((f) => `<li><i>fx</i>${f}</li>`).join("")}</ul>
+    ${more > 0 ? `<div class="more">+ ${more} more</div>` : ""}
+  </button>`;
+}).join("");
+document.querySelectorAll(".scard").forEach((c) =>
+  c.addEventListener("click", () => {
+    showSite(c.dataset.site);
+    $("agent").scrollIntoView({ behavior: "smooth" });
   })
 );
-$("replay").addEventListener("click", () => run(current));
-// start demo when visible
-new IntersectionObserver((entries, obs) => {
-  if (entries[0].isIntersecting) { run(current); obs.disconnect(); }
-}, { threshold: 0.3 }).observe($("demo"));
 
-// ---------- Function marquee ----------
-const FNS = [
-  ["Pipedrive.listDeals()", 9, ["Pipedrive.getDeal()", "Pipedrive.updateDeal()", "Pipedrive.addNote()", "+6 more"]],
-  ["LinkedIn.getProfile()", 12, ["LinkedIn.getCompany()", "LinkedIn.searchPeople()", "LinkedIn.searchJobs()", "+9 more"]],
-  ["Crunchbase.getOrganization()", 7, ["Crunchbase.listFundingRounds()", "Crunchbase.listInvestors()", "+5 more"]],
-  ["Luma.getEvent()", 5, ["Luma.listHostEvents()", "Luma.getGuests()", "+3 more"]],
-  ["Website.getAbout()", 8, ["Website.getBlog()", "Website.getCareers()", "Website.getPricing()", "+5 more"]],
-  ["News.search()", 2, ["News.getArticle()"]],
-  ["Gmail.listReplies()", 4, ["Gmail.createDraft()", "Gmail.getThread()", "+2 more"]],
-  ["GitHub.getOrg()", 6, ["GitHub.listRepos()", "GitHub.getReleases()", "+4 more"]],
-  ["Greenhouse.listJobs()", 2, ["Greenhouse.getJob()"]],
-  ["Sheets.appendRow()", 3, ["Sheets.getValues()", "Sheets.updateValues()"]],
-  ["ProductHunt.getLaunch()", 3, ["ProductHunt.listLaunches()", "ProductHunt.getMakers()"]],
-  ["Email.verify()", 3, ["Email.inferPattern()", "Email.findByName()"]],
-];
-const card = ([main, n, rest]) =>
-  `<div class="fn-card"><div class="top"><span class="main">${main}</span><span class="count">${n} fn</span></div><ul>${rest.map((r) => `<li>${r}</li>`).join("")}</ul></div>`;
-const half = Math.ceil(FNS.length / 2);
-const fill = (id, list) => { const html = list.map(card).join(""); $(id).innerHTML = html + html; };
-fill("track1", FNS.slice(0, half));
-fill("track2", FNS.slice(half));
+// ---------------------------------------------------------------------------
+// agent.ts typing panel
+// ---------------------------------------------------------------------------
+$("site-pills").innerHTML = ORDER.map((k) => `<button data-site="${k}"><i style="background:${SITES[k].color}"></i>${SITES[k].name}</button>`).join("");
+document.querySelectorAll("#site-pills button").forEach((b) => b.addEventListener("click", () => showSite(b.dataset.site)));
 
-// ---------- How it works: two paths ----------
-const PATH_BAD = [
-  ["Think", "Decide to open a search engine", "LLM"],
-  ["Load", "google.com: screenshot + DOM", "6k tok"],
-  ["Think", "Pick a result, click it", "LLM"],
-  ["Load", "northwind.ai homepage: 2.4 MB", "8k tok"],
-  ["Act", "Close cookie banner", "LLM"],
-  ["Think", "Find the About page", "LLM"],
-  ["Load", "About page", "7k tok"],
-  ["Think", "Where's headcount? Try LinkedIn", "LLM"],
-  ["Load", "linkedin.com: login wall", "5k tok"],
-  ["Act", "Sign in, wait, re-render", "LLM"],
-  ["Load", "Company page + People tab", "12k tok"],
-  ["Act", "Scroll to find DevRel", "LLM"],
-  ["Think", "Assemble an answer from screenshots", "LLM"],
-];
-const PATH_GOOD = [
-  ["Think", "Pick functions: getCompany, searchPeople", "LLM"],
-  ["Call", "website.getCompany({ domain }): 180 ms", "300 tok"],
-  ["Call", "linkedin.searchPeople({ title: \"DevRel\" }): 220 ms", "400 tok"],
-  ["Think", "Answer from typed JSON", "LLM"],
-];
-const renderPath = (id, steps) => {
-  document.getElementById(id).innerHTML = steps
-    .map(([k, t, n]) => `<li><span class="pk pk-${k.toLowerCase()}">${k}</span><span class="pt">${t}</span><span class="pn">${n}</span></li>`)
-    .join("");
-};
-renderPath("path-bad", PATH_BAD);
-renderPath("path-good", PATH_GOOD);
-
-// ---------- How it works: cost calculator ----------
-const fmt$ = (n) => "$" + Math.round(n).toLocaleString();
-const fmtT = (sec) => (sec >= 3600 ? `${Math.round(sec / 3600).toLocaleString()} hours` : `${Math.max(1, Math.round(sec / 60))} minutes`);
-const calc = () => {
-  const n = +document.getElementById("leads").value;
-  document.getElementById("leads-val").textContent = n.toLocaleString();
-  document.getElementById("c-bad").textContent = fmt$(n * 0.9);
-  document.getElementById("c-good").textContent = fmt$(n * 0.02);
-  document.getElementById("h-bad").textContent = fmtT(n * 240) + " of agent time";
-  document.getElementById("h-good").textContent = fmtT(n * 2.5) + " of agent time";
-  document.getElementById("c-save").textContent = fmt$(n * 0.88) + " / month";
-};
-document.getElementById("leads").addEventListener("input", calc);
-calc();
-
-// ---------- How it works: build pipeline ----------
-const NET = [
-  ["GET", "/api/v2/company?domain=…", "feature"],
-  ["POST", "/graphql  {op: PeopleSearch}", "feature"],
-  ["GET", "/collect?ev=pageview", "noise"],
-  ["GET", "/api/v2/company/8812/funding", "feature"],
-  ["WS", "/realtime/heartbeat", "noise"],
-  ["POST", "/graphql  {op: PersonProfile}", "feature"],
-  ["GET", "/ads/slot?pos=right", "noise"],
-  ["GET", "/api/v2/jobs?company=8812", "feature"],
-];
-const netList = (strike) =>
-  `<div class="net">${NET.map(([m, p, k]) =>
-    `<div class="net-row ${strike && k === "noise" ? "struck" : ""}"><span class="m m-${m.toLowerCase()}">${m}</span><code>${p}</code>${strike && k === "noise" ? '<span class="tag">dropped</span>' : ""}</div>`
-  ).join("")}</div>`;
-
-const STEPS = [
-  ["Capture", "A crawler uses the site the way a person would, searching, clicking and paging, thousands of times. It records every network request the page makes behind the scenes.",
-    () => netList(false) + '<p class="art-note">Captured: 4,210 requests across 38 page types</p>'],
-  ["Map", "Each request becomes a node in a graph. Requests that happen together get linked, and embeddings pull similar requests close, so features start to cluster on their own.",
-    () => '<div class="graph" id="graph"></div>'],
-  ["Clean", "Analytics pings, ads and heartbeats don't belong to any feature, so they're dropped. What's left are the requests that actually return data.",
-    () => netList(true)],
-  ["Name", "An LLM looks at each cluster and names the feature it performs. That name becomes the function name your agent sees.",
-    () => '<div class="graph" id="graph"></div>'],
-  ["Assemble", "For each cluster, the LLM writes one typed function: inputs, output schema, auth and pagination handled. Then it's tested against the live site.",
-    () => `<pre class="code art-code"><span class="file">providers/northwind-crm.ts (generated)</span>
-<span class="k">export async function</span> searchPeople(
-  input: { company: <span class="k">string</span>; title?: <span class="k">string</span> }
-): Promise&lt;Person[]&gt; {
-  <span class="k">const</span> res = <span class="k">await</span> gql(<span class="s">"PeopleSearch"</span>, input)
-  <span class="k">return</span> PersonList.parse(res.data.people)  <span class="c">// typed + validated</span>
-}</pre>`],
-  ["Run", "Your agent calls the function. It's a direct HTTP request: no browser, no screenshots, and a small JSON result the model can read cheaply.",
-    () => `<pre class="code art-code"><span class="k">await</span> linkedin.searchPeople({ company: <span class="s">"Northwind AI"</span>, title: <span class="s">"DevRel"</span> })
-<span class="c">// 214 ms · 1.1 KB · 380 tokens</span>
-[{ name: <span class="s">"Maya Chen"</span>, title: <span class="s">"Head of DevRel"</span>, location: <span class="s">"San Francisco"</span> }]</pre>`],
-];
-
-let nodes = [], rings = [];
-const clusters = [[18, 35], [50, 62], [82, 38]];
-function buildGraph(step) {
-  const graph = document.getElementById("graph");
-  if (!graph) return;
-  nodes = []; rings = [];
-  for (let i = 0; i < 24; i++) {
-    const n = document.createElement("div");
-    n.className = "node" + (i >= 20 ? " noise" : "");
-    graph.appendChild(n);
-    nodes.push({ el: n, c: i % 3, noise: i >= 20, rx: Math.random() * 92 + 2, ry: Math.random() * 80 + 8 });
+let typingRun = 0;
+let currentSite = "expedia";
+async function showSite(k) {
+  const run = ++typingRun;
+  currentSite = k;
+  const s = SITES[k];
+  document.querySelectorAll("#site-pills button").forEach((b) => b.classList.toggle("active", b.dataset.site === k));
+  document.querySelectorAll(".scard").forEach((c) => c.classList.toggle("active", c.dataset.site === k));
+  $("cw-status").textContent = "running…";
+  $("cw-out").classList.remove("on");
+  const body = $("cw-body");
+  const chipStyle = `background:${s.color};color:${s.dark ? "#1c1c1a" : "#fff"}`;
+  body.innerHTML = `<div class="cline"><span class="g">$</span><span class="t">import { <span class="chip" style="${chipStyle}">${ICONS[k]}${s.key}</span> } from '@decomposition/web';</span></div>`;
+  for (const line of s.code) {
+    if (run !== typingRun) return;
+    const row = document.createElement("div");
+    row.className = "cline";
+    row.innerHTML = '<span class="g">$</span><span class="t"></span><span class="caret"></span>';
+    body.appendChild(row);
+    const t = row.querySelector(".t");
+    for (const ch of line) {
+      if (run !== typingRun) return;
+      t.textContent += ch;
+      await sleep(18);
+    }
+    row.querySelector(".caret").remove();
+    await sleep(60);
   }
-  rings = clusters.map(([x, y], i) => {
-    const r = document.createElement("div");
-    r.className = "ring";
-    r.style.cssText = `left:calc(${x}% - 60px);top:calc(${y}% - 60px);width:120px;height:120px`;
-    r.innerHTML = `<label>${["getCompany()", "searchPeople()", "listJobs()"][i]}</label>`;
-    graph.appendChild(r);
-    return r;
-  });
-  // start scattered, then animate into place
-  layout(-1);
-  requestAnimationFrame(() => requestAnimationFrame(() => layout(step)));
+  await sleep(350);
+  if (run !== typingRun) return;
+  $("cw-status").textContent = "✓ done";
+  $("cw-out").innerHTML = `<div class="ok">${esc(s.out)}</div><div class="json">${esc(s.json)}</div>`;
+  $("cw-out").classList.add("on");
+  await sleep(3200);
+  if (run !== typingRun) return;
+  showSite(ORDER[(ORDER.indexOf(k) + 1) % ORDER.length]);
 }
-function layout(step) {
-  nodes.forEach((n, i) => {
+// start typing once the panel is visible
+new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { showSite(currentSite); o.disconnect(); } }, { threshold: 0.3 }).observe($("codewin"));
+
+// ---------------------------------------------------------------------------
+// Race: same task, two ways
+// ---------------------------------------------------------------------------
+const TASKS = [
+  {
+    id: "hotel", label: "Book a hotel", site: "expedia",
+    prompt: "Book me a hotel in Kyoto for 3 nights, under $200",
+    code: `<span class="k">const</span> r = <span class="k">await</span>\n  expedia.searchHotels({\n    location: <span class="s">"Kyoto"</span>,\n    checkIn: <span class="s">"2026-11-13"</span>,\n    checkOut: <span class="s">"2026-11-16"</span>\n  })`,
+    fn: "searchHotels", rows: [["Hyatt Place Kyoto", "$184"], ["Hotel Granvia Kyoto", "$196"], ["Hyatt Regency Kyoto", "$241"]],
+    result: "→ 3 hotels · from $184/night",
+    answer: "Done. 3 nights at Hyatt Place Kyoto, $184 a night, free cancellation.",
+    good: { secs: 2.5, tok: 1186, cost: 0.02 }, bad: { secs: 162, tok: 34866, cost: 0.63 },
+    url: "expedia.com/Hotel-Search?destination=Kyoto&startDate=2026-11-13…",
+    fields: ["Kyoto, Japan", "Nov 13 — Nov 16", "2 guests"],
+    items: [["Hyatt Place Kyoto", "Shimogyo, Kyoto · 4.4", "$184"], ["Hotel Granvia Kyoto", "Station, Kyoto · 4.3", "$196"], ["Hyatt Regency Kyoto", "Higashiyama · 4.6", "$241"]],
+    steps: ["Opening expedia.com", "Accepting cookie banner", "Typing \"Kyoto\"", "Picking check-in date", "Picking check-out date", "Clicking Search", "Waiting for results…", "Filtering under $200", "Reading room options", "Session expired, reloading", "Re-entering dates"],
+    fail: "Solving captcha…",
+  },
+  {
+    id: "product", label: "Find a product", site: "amazon",
+    prompt: "Find a carry-on under $150 rated 4.5★ or higher",
+    code: `<span class="k">const</span> r = <span class="k">await</span>\n  amazon.searchProducts({\n    keywords: <span class="s">"carry on luggage"</span>,\n    maxPrice: 150,\n    minRating: 4.5\n  })`,
+    fn: "searchProducts", rows: [["Hardside Spinner 22\"", "$69.99"], ["Aluminum Carry-On 21\"", "$129.99"], ["Softside Expandable", "$89.00"]],
+    result: "→ 48 products · from $69.99",
+    answer: "Best pick: Hardside Spinner 22\", 4.5★ from 21k reviews, $69.99.",
+    good: { secs: 1.9, tok: 942, cost: 0.01 }, bad: { secs: 190, tok: 41220, cost: 0.74 },
+    url: "amazon.com/s?k=carry+on+luggage&rh=p_36%3A-15000…",
+    fields: ["carry on luggage", "Under $150", "4★ & up"],
+    items: [["Hardside Spinner 22\"", "4.5 · 21,436 ratings", "$69.99"], ["Aluminum Carry-On 21\"", "4.6 · 8,214 ratings", "$129.99"], ["Softside Expandable", "4.4 · 3,127 ratings", "$89.00"]],
+    steps: ["Opening amazon.com", "Typing search", "Waiting for results…", "Opening filters", "Setting max price", "Setting rating filter", "Scrolling results", "Skipping sponsored items", "Opening product page", "Reading reviews", "Going back"],
+    fail: "\"Are you a robot?\" check",
+  },
+  {
+    id: "video", label: "Summarize a video", site: "youtube",
+    prompt: "Summarize the top Kyoto travel guide on YouTube",
+    code: `<span class="k">const</span> [v] = <span class="k">await</span>\n  youtube.search({\n    query: <span class="s">"kyoto travel guide"</span>\n  })\n<span class="k">const</span> t = <span class="k">await</span>\n  youtube.getTranscript(v.id)`,
+    fn: "getTranscript", rows: [["KYOTO — 3 perfect days", "18:42"], ["Transcript", "1,842 lines"]],
+    result: "→ transcript · 1,842 lines",
+    answer: "Day 1 Fushimi Inari at dawn, day 2 Arashiyama, day 3 Nishiki Market.",
+    good: { secs: 2.8, tok: 2410, cost: 0.04 }, bad: { secs: 245, tok: 58300, cost: 1.05 },
+    url: "youtube.com/results?search_query=kyoto+travel+guide",
+    fields: ["kyoto travel guide", "All", "Videos"],
+    items: [["KYOTO Travel Guide: 3 perfect days", "Mika in Japan · 1.2M views", "18:42"], ["Fushimi Inari at 6 AM", "Nomad Notes · 486K views", "12:07"], ["Kyoto's best temples in one day", "Sora Travels · 2.3M views", "24:15"]],
+    steps: ["Opening youtube.com", "Dismissing sign-in prompt", "Typing search", "Opening top video", "Skipping ad", "Opening description", "Clicking \"Show transcript\"", "Scrolling transcript", "Scrolling transcript", "Transcript panel reset", "Scrolling again"],
+    fail: "Context window full…",
+  },
+  {
+    id: "place", label: "Find a place", site: "maps",
+    prompt: "Find a coffee shop open now near Shibuya",
+    code: `<span class="k">const</span> r = <span class="k">await</span>\n  maps.searchNearby({\n    query: <span class="s">"coffee"</span>,\n    near: <span class="s">"Shibuya, Tokyo"</span>,\n    openNow: <span class="k">true</span>\n  })`,
+    fn: "searchNearby", rows: [["Fuglen Tokyo", "4.6★"], ["Little Nap Coffee", "4.5★"], ["Streamer Coffee", "4.4★"]],
+    result: "→ 12 places · 4.5★ avg",
+    answer: "Fuglen Tokyo: 4.6★, 6 min walk, open until 22:00.",
+    good: { secs: 1.6, tok: 880, cost: 0.01 }, bad: { secs: 140, tok: 29400, cost: 0.53 },
+    url: "google.com/maps/search/coffee+near+Shibuya…",
+    fields: ["coffee near Shibuya", "Open now", "Rating"],
+    items: [["Fuglen Tokyo", "Coffee shop · 6 min", "4.6★"], ["Little Nap Coffee", "Café · 9 min", "4.5★"], ["Streamer Coffee", "Coffee · 4 min", "4.4★"]],
+    steps: ["Opening maps", "Allowing location", "Typing search", "Waiting for map tiles…", "Clicking \"Open now\"", "Panning map", "Opening first result", "Reading hours", "Going back", "List re-sorted"],
+    fail: "Lost track of results",
+  },
+  {
+    id: "meet", label: "Book a meeting", site: "calendly",
+    prompt: "Book 30 min with Jane Park next Tuesday afternoon",
+    code: `<span class="k">const</span> r = <span class="k">await</span>\n  calendly.getAvailability({\n    profile: <span class="s">"jane-park"</span>,\n    event: <span class="s">"30min"</span>,\n    date: <span class="s">"2026-11-03"</span>\n  })`,
+    fn: "getAvailability", rows: [["Tue 2:00 PM", "open"], ["Tue 3:30 PM", "open"], ["Tue 4:00 PM", "open"]],
+    result: "→ 6 open slots",
+    answer: "Booked Tue Nov 3, 2:00 PM with Jane Park. Invite sent.",
+    good: { secs: 2.2, tok: 1020, cost: 0.02 }, bad: { secs: 175, tok: 37800, cost: 0.68 },
+    url: "calendly.com/jane-park/30min?month=2026-11",
+    fields: ["30 Minute Meeting", "November 2026", "PST"],
+    items: [["Tue, Nov 3 · 2:00 PM", "30 min", "Select"], ["Tue, Nov 3 · 3:30 PM", "30 min", "Select"], ["Tue, Nov 3 · 4:00 PM", "30 min", "Select"]],
+    steps: ["Opening calendly.com", "Finding Jane's page", "Picking event type", "Navigating to November", "Clicking Tuesday", "Reading slots", "Timezone mismatch", "Switching timezone", "Clicking 2:00 PM", "Filling name & email"],
+    fail: "Form validation error",
+  },
+];
+
+$("task-list").innerHTML = TASKS.map((t, i) =>
+  `<button class="task ${i === 0 ? "active" : ""}" data-i="${i}"><span class="play"></span>${t.label}<small>${SITES[t.site].name}</small></button>`
+).join("");
+let raceRun = 0, raceIdx = 0;
+document.querySelectorAll(".task").forEach((b) => b.addEventListener("click", () => race(+b.dataset.i)));
+$("replay").addEventListener("click", () => race(raceIdx));
+
+const fmtBad = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
+const chatShell = (title, prompt) =>
+  `<div class="chat-title">${title}</div><div class="chat-scroll"><div class="chat-prompt">${esc(prompt)}</div></div><div class="chat-input">Reply to Claude…</div>`;
+
+async function race(i) {
+  const run = ++raceRun;
+  raceIdx = i;
+  const T = TASKS[i], S = SITES[T.site];
+  document.querySelectorAll(".task").forEach((b, j) => b.classList.toggle("active", j === i));
+
+  // reset
+  $("g-chat").innerHTML = chatShell(T.label, T.prompt);
+  $("b-chat").innerHTML = chatShell(T.label, T.prompt);
+  $("g-code").innerHTML = ""; $("g-done").textContent = ""; $("g-res").textContent = "";
+  $("g-state").textContent = ""; $("b-state").textContent = "";
+  $("b-tab").textContent = new URL("https://" + T.url).hostname;
+  $("b-url").textContent = T.url;
+  const headColor = S.key === "expedia" ? "#191e3b" : S.key === "youtube" ? "#202020" : S.color;
+  $("b-site").innerHTML = `<div class="site-head" style="background:${headColor}">${S.name}<span>Sign in</span></div>
+    <div class="site-search">${T.fields.map((f) => `<div>${esc(f)}</div>`).join("")}</div><div id="b-rows"></div>`;
+  const cursor = $("b-cursor");
+  cursor.style.left = "60%"; cursor.style.top = "30%";
+
+  const BAD_REAL = 8000; // ms of real time for the browser replay
+  const scale = BAD_REAL / T.bad.secs; // ms per simulated second
+  const t0 = performance.now();
+
+  // timers / counters
+  const tick = () => {
+    if (run !== raceRun) return;
+    const el = performance.now() - t0;
+    const gSec = Math.min(el / 1000, T.good.secs);
+    const bSec = Math.min(el / scale, T.bad.secs);
+    $("g-time").textContent = gSec.toFixed(1) + "s";
+    $("b-time").textContent = fmtBad(bSec);
+    $("g-bar").style.width = (gSec / T.bad.secs) * 100 + "%";
+    $("b-bar").style.width = (bSec / T.bad.secs) * 100 + "%";
+    $("g-tok").textContent = Math.round(T.good.tok * gSec / T.good.secs).toLocaleString();
+    $("g-cost").textContent = "$" + (T.good.cost * gSec / T.good.secs).toFixed(2);
+    $("b-tok").textContent = Math.round(T.bad.tok * bSec / T.bad.secs).toLocaleString();
+    $("b-cost").textContent = "$" + (T.bad.cost * bSec / T.bad.secs).toFixed(2);
+    if (gSec >= T.good.secs) $("g-state").textContent = "Done";
+    if (bSec < T.bad.secs) requestAnimationFrame(tick);
+    else $("b-state").textContent = "Blocked";
+  };
+  requestAnimationFrame(tick);
+
+  // good side
+  (async () => {
+    const lines = T.code.split("\n");
+    for (let n = 1; n <= lines.length; n++) {
+      if (run !== raceRun) return;
+      $("g-code").innerHTML = lines.slice(0, n).join("\n");
+      await sleep(T.good.secs * 1000 * 0.35 / lines.length);
+    }
+    await sleep(T.good.secs * 1000 * 0.2);
+    if (run !== raceRun) return;
+    const scroll = $("g-chat").querySelector(".chat-scroll");
+    const card = document.createElement("div");
+    card.className = "chat-res";
+    card.innerHTML = `<div class="muted small">${T.fn} · Decomposition <span class="good-c">✓ 0.4s</span></div>` +
+      T.rows.map(([a, b]) => `<b><span>${esc(a)}</span><span>${esc(b)}</span></b>`).join("");
+    scroll.appendChild(card);
+    await sleep(T.good.secs * 1000 * 0.45);
+    if (run !== raceRun) return;
+    const ans = document.createElement("div");
+    ans.className = "chat-ans";
+    ans.textContent = T.answer;
+    scroll.appendChild(ans);
+    $("g-done").textContent = "✓ done";
+    $("g-res").textContent = `${T.result} · ${T.good.secs}s`;
+  })();
+
+  // bad side
+  (async () => {
+    const scroll = $("b-chat").querySelector(".chat-scroll");
+    const all = [...T.steps, T.fail];
+    const per = BAD_REAL / all.length;
+    for (let n = 0; n < all.length; n++) {
+      if (run !== raceRun) return;
+      scroll.querySelectorAll(".cur").forEach((e) => e.classList.remove("cur"));
+      const st = document.createElement("div");
+      const last = n === all.length - 1;
+      st.className = "chat-step " + (last ? "cur" : "cur");
+      st.textContent = all[n];
+      scroll.appendChild(st);
+      while (scroll.children.length > 9) scroll.children[1].remove();
+      // browser visuals
+      cursor.style.left = 25 + Math.random() * 60 + "%";
+      cursor.style.top = 25 + Math.random() * 60 + "%";
+      const rows = $("b-rows");
+      if (rows && n >= Math.floor(all.length * 0.55) && rows.children.length < T.items.length && !last) {
+        const [a, b, c] = T.items[rows.children.length];
+        rows.insertAdjacentHTML("beforeend", `<div class="site-row"><div class="thumb"></div><div class="info"><b>${esc(a)}</b><span class="muted">${esc(b)}</span></div><div class="price">${esc(c)}</div></div>`);
+      }
+      if (last) {
+        st.className = "chat-step fail";
+        $("b-site").insertAdjacentHTML("beforeend", `<div class="captcha"><b>Verify you're human</b><div><i></i>I'm not a robot</div></div>`);
+        const r = $("b-rows"); if (r) r.remove();
+      }
+      await sleep(per);
+    }
+  })();
+}
+new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { race(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("race"));
+
+// ---------------------------------------------------------------------------
+// Capabilities columns
+// ---------------------------------------------------------------------------
+const EXTRA = [
+  ["Reddit", "#ff4500", 5, ["search()", "getPost()", "getSubredditPosts()", "getSubreddit()", "searchSubreddits()"]],
+  ["LinkedIn", "#0a66c2", 4, ["searchJobs()", "getProfile()", "getCompany()", "getJob()"]],
+  ["Wikipedia", "#555", 1, ["search()"]],
+  ["Google Flights", "#1a73e8", 3, ["search()", "getBookingOptions()", "getPriceGraph()"]],
+  ["GitHub", "#24292f", 3, ["listCommits()", "listReleases()", "getProfileReadme()"]],
+  ["Walmart", "#0071ce", 1, ["search()"]],
+  ["Airbnb", "#ff385c", 6, ["searchStays()", "getListing()", "getAvailability()", "listReviews()", "+2"]],
+  ["Yelp", "#d32323", 5, ["search()", "getBusiness()", "listReviews()", "listPhotos()", "+1"]],
+  ["Etsy", "#f1641e", 1, ["search()"]],
+  ["Zillow", "#006aff", 4, ["searchHomes()", "getHome()", "getEstimate()", "listSold()"]],
+  ["Spotify", "#1db954", 7, ["search()", "getTrack()", "getArtist()", "getPlaylist()", "+3"]],
+  ["Hacker News", "#ff6600", 3, ["topStories()", "getItem()", "search()"]],
+];
+const fcard = (name, color, count, fns, icon, focus) => {
+  const ico = icon ? `<span class="ico" style="background:${color}">${icon}</span>` : `<span class="ico" style="background:${color}">${name[0]}</span>`;
+  const [main, ...rest] = fns.filter((f) => !f.startsWith("+"));
+  const shown = rest.slice(0, 4);
+  const more = count - 1 - shown.length;
+  return `<div class="fcard ${focus ? "focus" : ""}"><div class="fcard-top">${ico}<span>${name}.${main}</span><span class="cnt">${count}</span></div>
+    ${shown.length ? `<ul>${shown.map((f) => `<li><i>fx</i>${name}.${f}</li>`).join("")}</ul>` : ""}
+    ${more > 0 ? `<div class="more">+${more} more</div>` : ""}</div>`;
+};
+const focusCards = ORDER.map((k) => {
+  const s = SITES[k];
+  const icon = k === "youtube" ? ICONS.youtube : k === "maps" ? ICONS.maps : `<span style="color:${s.dark ? "#1c1c1a" : "#fff"};display:grid">${ICONS[k]}</span>`;
+  return fcard(s.name, s.color, s.count, s.fns, icon, true);
+});
+const extraCards = EXTRA.map(([n, c, cnt, f]) => fcard(n, c, cnt, f, null, false));
+const cols = [[], [], []];
+const mixed = [];
+for (let i = 0; i < Math.max(focusCards.length, extraCards.length); i++) {
+  if (focusCards[i]) mixed.push(focusCards[i]);
+  if (extraCards[i]) mixed.push(extraCards[i]);
+  if (extraCards[i + 12]) mixed.push(extraCards[i + 12]);
+}
+mixed.forEach((c, i) => cols[i % 3].push(c));
+cols.forEach((c, i) => { $("col" + i).innerHTML = c.join("") + c.join(""); });
+
+// ---------------------------------------------------------------------------
+// How it works: isometric scene
+// ---------------------------------------------------------------------------
+const STEPS = [
+  ["Capture", "A crawler loads the site thousands of times and uses every feature on it, recording the requests behind each one: JSON APIs, GraphQL, protobufs and websockets."],
+  ["Map", "Every captured request becomes a node in a graph. Requests that work together are joined, and similar ones drift together, so features form on their own."],
+  ["Clean", "Some requests belong to no feature: analytics pings, ads and heartbeats. They're dropped, so only the real pieces of each feature remain."],
+  ["Name", "An LLM draws a circle around each group and names the feature it performs: searchHotels, getTranscript, searchNearby."],
+  ["Assemble", "For each group, the LLM writes one typed interface and fits its requests together into a single function, then tests it against the live site."],
+  ["Run natively", "The finished functions load into the Decomposition library and run natively in Node or Python, with no browser at all."],
+];
+const board = $("board"), disc = $("disc"), pad = $("pad");
+const CL = [[95, 110, "searchHotels()"], [205, 120, "getTranscript()"], [150, 215, "searchNearby()"]];
+const dnodes = [];
+for (let i = 0; i < 27; i++) {
+  const el = document.createElement("div");
+  const noise = i >= 21;
+  el.className = "dnode" + (noise ? " noise" : "");
+  const a = Math.random() * Math.PI * 2, r = 30 + Math.random() * 105;
+  const n = { el, noise, c: i % 3, rx: 150 + Math.cos(a) * r, ry: 150 + Math.sin(a) * r, k: i };
+  disc.appendChild(el);
+  dnodes.push(n);
+}
+const rings = CL.map(([x, y, label]) => {
+  const r = document.createElement("div");
+  r.className = "cring";
+  r.style.left = x + "px"; r.style.top = y + "px";
+  r.innerHTML = `<span class="tag3d">${label}</span>`;
+  disc.appendChild(r);
+  return r;
+});
+const KEYS = ["searchHotels()", "getTranscript()", "searchNearby()"];
+const keys = KEYS.map((label, i) => {
+  const k = document.createElement("div");
+  k.className = "key";
+  k.style.top = 22 + i * 52 + "px";
+  k.innerHTML = `<span class="tag3d">${label}</span>`;
+  pad.appendChild(k);
+  return k;
+});
+
+$("iso-prog").innerHTML = STEPS.map((_, i) => `<button aria-label="Step ${i + 1}" data-i="${i}"></button>`).join("");
+let isoStep = 0, isoTimer, isoRun = 0, packetTimer;
+document.querySelectorAll("#iso-prog button").forEach((b) => b.addEventListener("click", () => { clearInterval(isoTimer); setIso(+b.dataset.i); }));
+
+function placeNodes(step) {
+  dnodes.forEach((n) => {
     let x = n.rx, y = n.ry;
     if (step >= 1 && !n.noise) {
-      const [cx, cy] = clusters[n.c];
-      const a = (i / 7) * Math.PI * 2;
-      x = cx + Math.cos(a) * 8;
-      y = cy + Math.sin(a) * 22;
+      const [cx, cy] = CL[n.c];
+      const a = (n.k / 7) * Math.PI * 2;
+      x = cx + Math.cos(a) * 26; y = cy + Math.sin(a) * 26;
     }
-    n.el.style.left = `calc(${x}% - 7px)`;
-    n.el.style.top = `calc(${y}% - 7px)`;
+    n.el.style.left = x + "px"; n.el.style.top = y + "px";
+    n.el.classList.toggle("on", step >= 1);
     n.el.classList.toggle("gone", n.noise && step >= 2);
   });
-  rings.forEach((r) => r.classList.toggle("on", step >= 3));
 }
 
-const list = document.getElementById("step-list");
-let stepIdx = 0, stepTimer;
-function showStep(i) {
-  stepIdx = i;
-  [...list.children].forEach((b, j) => b.classList.toggle("active", j === i));
-  document.getElementById("step-num").textContent = `0${i + 1} / 06`;
-  document.getElementById("step-title").textContent = STEPS[i][0];
-  document.getElementById("step-body").textContent = STEPS[i][1];
-  document.getElementById("artifact").innerHTML = STEPS[i][2]();
-  buildGraph(i);
+function shootPackets() {
+  // packets fly from the monitor base to random spots on the disc
+  let shown = 0;
+  clearInterval(packetTimer);
+  packetTimer = setInterval(() => {
+    const p = document.createElement("div");
+    p.className = "packet";
+    board.appendChild(p);
+    const n = dnodes[shown % dnodes.length];
+    const tx = 360 + n.rx, ty = 80 + n.ry;
+    p.animate([{ left: "195px", top: "225px", opacity: 1 }, { left: tx + "px", top: ty + "px", opacity: 1 }], { duration: 700, easing: "ease-in" })
+      .onfinish = () => { p.remove(); n.el.classList.add("on"); };
+    shown++;
+    if (shown >= dnodes.length) clearInterval(packetTimer);
+  }, 140);
 }
-STEPS.forEach(([t], i) => {
-  const b = document.createElement("button");
-  b.className = "step-item";
-  b.innerHTML = `<b>0${i + 1}</b>${t}`;
-  b.addEventListener("click", () => { clearInterval(stepTimer); showStep(i); });
-  list.appendChild(b);
-});
-showStep(0);
-stepTimer = setInterval(() => showStep((stepIdx + 1) % STEPS.length), 5000);
 
-// ---------- Booking CTA ----------
-// Replace with the real Pipedrive scheduler link.
-const BOOKING_URL = "https://pipedrive.com/scheduler/REPLACE-ME";
-document.querySelectorAll("[data-book]").forEach((a) => {
-  a.href = BOOKING_URL;
-  a.target = "_blank";
-  a.rel = "noopener";
-});
+async function setIso(i) {
+  const run = ++isoRun;
+  isoStep = i;
+  board.dataset.step = i;
+  $("iso-num").textContent = `0${i + 1} / 06`;
+  $("iso-title").textContent = STEPS[i][0];
+  $("iso-body").textContent = STEPS[i][1];
+  document.querySelectorAll("#iso-prog button").forEach((b, j) => { b.classList.toggle("on", j === i); b.classList.toggle("done", j < i); });
+  clearInterval(packetTimer);
+  board.querySelectorAll(".packet").forEach((p) => p.remove());
+
+  if (i === 0) {
+    dnodes.forEach((n) => { n.el.classList.remove("on", "gone"); n.el.style.left = n.rx + "px"; n.el.style.top = n.ry + "px"; });
+    shootPackets();
+  } else placeNodes(i);
+  rings.forEach((r) => r.classList.toggle("on", i >= 3));
+  keys.forEach((k) => { k.classList.toggle("on", i >= 4); k.classList.remove("press"); });
+
+  const term = $("term-lines");
+  term.innerHTML = '<div class="term-line">Welcome to Node.js</div>';
+  if (i === 5) {
+    for (let j = 0; j < keys.length; j++) {
+      await sleep(500);
+      if (run !== isoRun) return;
+      keys[j].classList.add("press");
+      term.insertAdjacentHTML("beforeend", `<div class="term-line">&gt; web.${KEYS[j]} <span class="ok">✓</span></div>`);
+      await sleep(250);
+      keys[j].classList.remove("press");
+    }
+    term.insertAdjacentHTML("beforeend", '<div class="term-line">&gt; _</div>');
+  }
+}
+setIso(0);
+isoTimer = setInterval(() => setIso((isoStep + 1) % STEPS.length), 5200);
+
+// ---------------------------------------------------------------------------
+// Copy button
+// ---------------------------------------------------------------------------
+document.querySelectorAll(".copy[data-copy]").forEach((b) =>
+  b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); } catch {}
+    b.textContent = "✓"; setTimeout(() => (b.textContent = "⧉"), 1200);
+  })
+);
