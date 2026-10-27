@@ -209,40 +209,122 @@ const fill = (id, list) => { const html = list.map(card).join(""); $(id).innerHT
 fill("track1", FNS.slice(0, half));
 fill("track2", FNS.slice(half));
 
-// ---------- How it works ----------
-const STEPS = [
-  ["Pull replies", "Read every deal in the Pipedrive Sponsors pipeline that moved to \"Replied\" — the leads who asked for more info."],
-  ["Enrich", "Call typed functions across LinkedIn, Crunchbase, the company site and news to fill in buyer, stage and recent launches."],
-  ["Filter", "Drop leads that don't match an audience you can deliver, so effort goes where a sponsorship makes sense."],
-  ["Match", "Group leads by fit: single event vs. multi-city series, and which workshop theme lines up with what they just shipped."],
-  ["Compose", "Write the phase-two email and generate a Luma-style sponsor page with agenda, audience and packages — no pricing."],
-  ["Book", "The CTA is your Pipedrive scheduler, so every booked call lands back in Pipedrive as a record."],
+// ---------- How it works: two paths ----------
+const PATH_BAD = [
+  ["Think", "Decide to open a search engine", "LLM"],
+  ["Load", "google.com: screenshot + DOM", "6k tok"],
+  ["Think", "Pick a result, click it", "LLM"],
+  ["Load", "northwind.ai homepage: 2.4 MB", "8k tok"],
+  ["Act", "Close cookie banner", "LLM"],
+  ["Think", "Find the About page", "LLM"],
+  ["Load", "About page", "7k tok"],
+  ["Think", "Where's headcount? Try LinkedIn", "LLM"],
+  ["Load", "linkedin.com: login wall", "5k tok"],
+  ["Act", "Sign in, wait, re-render", "LLM"],
+  ["Load", "Company page + People tab", "12k tok"],
+  ["Act", "Scroll to find DevRel", "LLM"],
+  ["Think", "Assemble an answer from screenshots", "LLM"],
 ];
-const graph = $("graph");
-const clusters = [[18, 30], [50, 60], [82, 35]];
-const nodes = [];
-for (let i = 0; i < 24; i++) {
-  const n = document.createElement("div");
-  n.className = "node" + (i >= 20 ? " noise" : "");
-  graph.appendChild(n);
-  nodes.push({ el: n, c: i % 3, noise: i >= 20, rx: Math.random() * 92 + 2, ry: Math.random() * 85 + 5 });
+const PATH_GOOD = [
+  ["Think", "Pick functions: getCompany, searchPeople", "LLM"],
+  ["Call", "website.getCompany({ domain }): 180 ms", "300 tok"],
+  ["Call", "linkedin.searchPeople({ title: \"DevRel\" }): 220 ms", "400 tok"],
+  ["Think", "Answer from typed JSON", "LLM"],
+];
+const renderPath = (id, steps) => {
+  document.getElementById(id).innerHTML = steps
+    .map(([k, t, n]) => `<li><span class="pk pk-${k.toLowerCase()}">${k}</span><span class="pt">${t}</span><span class="pn">${n}</span></li>`)
+    .join("");
+};
+renderPath("path-bad", PATH_BAD);
+renderPath("path-good", PATH_GOOD);
+
+// ---------- How it works: cost calculator ----------
+const fmt$ = (n) => "$" + Math.round(n).toLocaleString();
+const fmtT = (sec) => (sec >= 3600 ? `${Math.round(sec / 3600).toLocaleString()} hours` : `${Math.max(1, Math.round(sec / 60))} minutes`);
+const calc = () => {
+  const n = +document.getElementById("leads").value;
+  document.getElementById("leads-val").textContent = n.toLocaleString();
+  document.getElementById("c-bad").textContent = fmt$(n * 0.9);
+  document.getElementById("c-good").textContent = fmt$(n * 0.02);
+  document.getElementById("h-bad").textContent = fmtT(n * 240) + " of agent time";
+  document.getElementById("h-good").textContent = fmtT(n * 2.5) + " of agent time";
+  document.getElementById("c-save").textContent = fmt$(n * 0.88) + " / month";
+};
+document.getElementById("leads").addEventListener("input", calc);
+calc();
+
+// ---------- How it works: build pipeline ----------
+const NET = [
+  ["GET", "/api/v2/company?domain=…", "feature"],
+  ["POST", "/graphql  {op: PeopleSearch}", "feature"],
+  ["GET", "/collect?ev=pageview", "noise"],
+  ["GET", "/api/v2/company/8812/funding", "feature"],
+  ["WS", "/realtime/heartbeat", "noise"],
+  ["POST", "/graphql  {op: PersonProfile}", "feature"],
+  ["GET", "/ads/slot?pos=right", "noise"],
+  ["GET", "/api/v2/jobs?company=8812", "feature"],
+];
+const netList = (strike) =>
+  `<div class="net">${NET.map(([m, p, k]) =>
+    `<div class="net-row ${strike && k === "noise" ? "struck" : ""}"><span class="m m-${m.toLowerCase()}">${m}</span><code>${p}</code>${strike && k === "noise" ? '<span class="tag">dropped</span>' : ""}</div>`
+  ).join("")}</div>`;
+
+const STEPS = [
+  ["Capture", "A crawler uses the site the way a person would, searching, clicking and paging, thousands of times. It records every network request the page makes behind the scenes.",
+    () => netList(false) + '<p class="art-note">Captured: 4,210 requests across 38 page types</p>'],
+  ["Map", "Each request becomes a node in a graph. Requests that happen together get linked, and embeddings pull similar requests close, so features start to cluster on their own.",
+    () => '<div class="graph" id="graph"></div>'],
+  ["Clean", "Analytics pings, ads and heartbeats don't belong to any feature, so they're dropped. What's left are the requests that actually return data.",
+    () => netList(true)],
+  ["Name", "An LLM looks at each cluster and names the feature it performs. That name becomes the function name your agent sees.",
+    () => '<div class="graph" id="graph"></div>'],
+  ["Assemble", "For each cluster, the LLM writes one typed function: inputs, output schema, auth and pagination handled. Then it's tested against the live site.",
+    () => `<pre class="code art-code"><span class="file">providers/northwind-crm.ts (generated)</span>
+<span class="k">export async function</span> searchPeople(
+  input: { company: <span class="k">string</span>; title?: <span class="k">string</span> }
+): Promise&lt;Person[]&gt; {
+  <span class="k">const</span> res = <span class="k">await</span> gql(<span class="s">"PeopleSearch"</span>, input)
+  <span class="k">return</span> PersonList.parse(res.data.people)  <span class="c">// typed + validated</span>
+}</pre>`],
+  ["Run", "Your agent calls the function. It's a direct HTTP request: no browser, no screenshots, and a small JSON result the model can read cheaply.",
+    () => `<pre class="code art-code"><span class="k">await</span> linkedin.searchPeople({ company: <span class="s">"Northwind AI"</span>, title: <span class="s">"DevRel"</span> })
+<span class="c">// 214 ms · 1.1 KB · 380 tokens</span>
+[{ name: <span class="s">"Maya Chen"</span>, title: <span class="s">"Head of DevRel"</span>, location: <span class="s">"San Francisco"</span> }]</pre>`],
+];
+
+let nodes = [], rings = [];
+const clusters = [[18, 35], [50, 62], [82, 38]];
+function buildGraph(step) {
+  const graph = document.getElementById("graph");
+  if (!graph) return;
+  nodes = []; rings = [];
+  for (let i = 0; i < 24; i++) {
+    const n = document.createElement("div");
+    n.className = "node" + (i >= 20 ? " noise" : "");
+    graph.appendChild(n);
+    nodes.push({ el: n, c: i % 3, noise: i >= 20, rx: Math.random() * 92 + 2, ry: Math.random() * 80 + 8 });
+  }
+  rings = clusters.map(([x, y], i) => {
+    const r = document.createElement("div");
+    r.className = "ring";
+    r.style.cssText = `left:calc(${x}% - 60px);top:calc(${y}% - 60px);width:120px;height:120px`;
+    r.innerHTML = `<label>${["getCompany()", "searchPeople()", "listJobs()"][i]}</label>`;
+    graph.appendChild(r);
+    return r;
+  });
+  // start scattered, then animate into place
+  layout(-1);
+  requestAnimationFrame(() => requestAnimationFrame(() => layout(step)));
 }
-const rings = clusters.map(([x, y], i) => {
-  const r = document.createElement("div");
-  r.className = "ring";
-  r.style.cssText = `left:calc(${x}% - 60px);top:calc(${y}% - 60px);width:120px;height:120px`;
-  r.innerHTML = `<label>${["single event", "series", "workshop theme"][i]}</label>`;
-  graph.appendChild(r);
-  return r;
-});
 function layout(step) {
   nodes.forEach((n, i) => {
     let x = n.rx, y = n.ry;
     if (step >= 1 && !n.noise) {
       const [cx, cy] = clusters[n.c];
       const a = (i / 7) * Math.PI * 2;
-      x = cx + Math.cos(a) * (step >= 4 ? 3 : 8);
-      y = cy + Math.sin(a) * (step >= 4 ? 8 : 22);
+      x = cx + Math.cos(a) * 8;
+      y = cy + Math.sin(a) * 22;
     }
     n.el.style.left = `calc(${x}% - 7px)`;
     n.el.style.top = `calc(${y}% - 7px)`;
@@ -250,15 +332,17 @@ function layout(step) {
   });
   rings.forEach((r) => r.classList.toggle("on", step >= 3));
 }
-const list = $("step-list");
+
+const list = document.getElementById("step-list");
 let stepIdx = 0, stepTimer;
 function showStep(i) {
   stepIdx = i;
   [...list.children].forEach((b, j) => b.classList.toggle("active", j === i));
-  $("step-num").textContent = `0${i + 1} / 06`;
-  $("step-title").textContent = STEPS[i][0];
-  $("step-body").textContent = STEPS[i][1];
-  layout(i);
+  document.getElementById("step-num").textContent = `0${i + 1} / 06`;
+  document.getElementById("step-title").textContent = STEPS[i][0];
+  document.getElementById("step-body").textContent = STEPS[i][1];
+  document.getElementById("artifact").innerHTML = STEPS[i][2]();
+  buildGraph(i);
 }
 STEPS.forEach(([t], i) => {
   const b = document.createElement("button");
@@ -268,7 +352,7 @@ STEPS.forEach(([t], i) => {
   list.appendChild(b);
 });
 showStep(0);
-stepTimer = setInterval(() => showStep((stepIdx + 1) % STEPS.length), 3500);
+stepTimer = setInterval(() => showStep((stepIdx + 1) % STEPS.length), 5000);
 
 // ---------- Booking CTA ----------
 // Replace with the real Pipedrive scheduler link.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Decomposition AI — sponsor-lead enrichment for event teams</title>
+<title>Decomposition AI — websites as typed functions for lead enrichment</title>
 <meta name="description" content="Pipedrive leads in. Enriched phase-two emails and ready-to-send Luma sponsor pages out." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -23,7 +23,7 @@
     Decomposition AI
   </a>
   <nav class="nav-links">
-    <a href="#pipeline">Pipeline</a>
+    <a href="#how-it-works">How it works</a>
     <a href="#demo">Demo</a>
     <a href="#outputs">Outputs</a>
     <a href="#faq">FAQ</a>
@@ -40,12 +40,12 @@
   <div class="hero-card">
     <canvas id="hero-bg" aria-hidden="true"></canvas>
     <div class="hero-inner">
-      <h1>Every sponsor lead,<br/>fully decomposed.</h1>
-      <p>Pipedrive leads in. Enriched phase-two emails and ready-to-send Luma sponsor pages out — for every lead that replied.</p>
-      <a href="#" data-book class="btn btn-lg">Book a call</a>
+      <h1>Every lead,<br/>fully decomposed.</h1>
+      <p>We break websites down into typed functions, so your agents get lead data in seconds for cents, with no browser needed.</p>
+      <a href="#how-it-works" class="btn btn-lg">See how it works</a>
     </div>
     <div class="install-pill">
-      <div class="install-head">Run it on <b>SuperOptimal</b> → <b>Pipedrive</b></div>
+      <div class="install-head">Enrich your <b>CRM</b> leads</div>
       <div class="install-code">
         <code><span class="dim">$</span> decompose enrich --pipeline "Sponsors" --stage replied</code>
         <button class="copy" data-copy='decompose enrich --pipeline "Sponsors" --stage replied' aria-label="Copy">⧉</button>
@@ -56,8 +56,111 @@
 
 <!-- PROBLEM -->
 <section class="section center narrow">
-  <h2>Cold email gets the reply.<br/>Email two closes the call.</h2>
-  <p class="lede">Phase one already lands ~25% replies. Decomposition AI turns each "tell me more" into a researched follow-up and a personalised sponsor page — in seconds, not an afternoon.</p>
+  <h2>The web wasn't built for AI agents.</h2>
+  <p class="lede">So today agents use it like a person would: open a browser, look at the screen, click, wait, read. That's slow and expensive. Decomposition AI skips the screen entirely.</p>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <div class="center narrow">
+    <span class="eyebrow">How it works</span>
+    <h2>What does "decomposing" a website actually do?</h2>
+    <p class="lede">Every website is a thin layer of pixels over a few small data requests. Browser agents work on the pixels. Decomposition AI works on the requests underneath.</p>
+  </div>
+
+  <!-- Layers -->
+  <div class="layers">
+    <div class="layer l1">
+      <div class="layer-tag">What you see</div>
+      <div class="layer-main"><b>Rendered page</b><span>Pixels, buttons, pop-ups, cookie banners</span></div>
+      <div class="layer-size">~1,500 tokens per screenshot<br/><em>× every step</em></div>
+      <div class="layer-who bad-c">← browser agents read this</div>
+    </div>
+    <div class="layer l2">
+      <div class="layer-tag">What the browser downloads</div>
+      <div class="layer-main"><b>HTML + JavaScript + CSS</b><span>Layout, tracking scripts, ads, fonts</span></div>
+      <div class="layer-size">~2.4 MB · 40k+ tokens of DOM</div>
+      <div class="layer-who"></div>
+    </div>
+    <div class="layer l3">
+      <div class="layer-tag">What the page actually needed</div>
+      <div class="layer-main"><b>One data request</b><code>GET /api/company?domain=northwind.ai → JSON</code></div>
+      <div class="layer-size">~3 KB · ~300 tokens</div>
+      <div class="layer-who good-c">← Decomposition AI calls this</div>
+    </div>
+  </div>
+  <p class="center muted note">Decomposing = finding those underlying requests once, and wrapping them as typed functions your agent can call directly.</p>
+
+  <!-- Two paths -->
+  <div class="center narrow" style="margin-top:110px">
+    <h2>Same question. Two paths.</h2>
+    <p class="lede">"What does Northwind AI do, how big are they, and who runs DevRel?"</p>
+  </div>
+  <div class="paths">
+    <div class="path">
+      <div class="path-head"><b>Browser agent</b><span class="bad-c">8 LLM calls · ~4 min</span></div>
+      <ol class="path-steps" id="path-bad"></ol>
+      <div class="path-foot"><span>Tokens read by the model</span><b class="bad-c">~52,000</b></div>
+    </div>
+    <div class="path">
+      <div class="path-head"><b>Decomposition AI</b><span class="good-c">2 LLM calls · ~2.5 s</span></div>
+      <ol class="path-steps" id="path-good"></ol>
+      <div class="path-foot"><span>Tokens read by the model</span><b class="good-c">~1,200</b></div>
+    </div>
+  </div>
+
+  <!-- Savings -->
+  <div class="center narrow" style="margin-top:110px">
+    <h2>Where the savings come from.</h2>
+    <p class="lede">There's no magic, just four things a browser agent has to do and we don't.</p>
+  </div>
+  <div class="savings">
+    <div class="saving">
+      <div class="big">~40×</div><b>Fewer tokens per step</b>
+      <p>The model reads a 3 KB JSON answer, not a 2 MB page or a stack of screenshots. Tokens are what you pay for.</p>
+    </div>
+    <div class="saving">
+      <div class="big">~4×</div><b>Fewer LLM round trips</b>
+      <p>A browser agent has to stop and think before every click: look, decide, click, wait, look again. A function call is one step.</p>
+    </div>
+    <div class="saving">
+      <div class="big">~200 ms</div><b>No browser to run</b>
+      <p>A plain HTTP request instead of booting Chrome, loading scripts and waiting for renders. Run hundreds in parallel on a laptop.</p>
+    </div>
+    <div class="saving">
+      <div class="big">~0</div><b>Retries from UI breakage</b>
+      <p>No captchas, pop-ups, layout changes or lost sessions. Responses are checked against a typed schema, so bad data fails loudly.</p>
+    </div>
+  </div>
+
+  <div class="calc">
+    <div class="calc-in">
+      <label for="leads">Leads enriched per month</label>
+      <div class="calc-val" id="leads-val">1,000</div>
+      <input type="range" id="leads" min="100" max="20000" step="100" value="1000" />
+      <p class="muted small">Assumes ~$0.90 and ~4 min per lead for a browser agent vs ~$0.02 and ~2.5 s with Decomposition AI. These are illustrative estimates, not measured benchmarks.</p>
+    </div>
+    <div class="calc-out">
+      <div><span class="muted">Browser agent</span><b class="bad-c" id="c-bad">$900</b><span class="muted" id="h-bad">67 hours of agent time</span></div>
+      <div><span class="muted">Decomposition AI</span><b class="good-c" id="c-good">$20</b><span class="muted" id="h-good">42 minutes of agent time</span></div>
+      <div class="calc-save"><span>You save</span><b id="c-save">$880 / month</b></div>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="center narrow" style="margin-top:110px">
+    <h2>How a website becomes functions.</h2>
+    <p class="lede">The expensive browser work happens <b>once per site, at build time</b>. Every call after that is a cheap HTTP request.</p>
+  </div>
+  <div class="steps">
+    <div class="step-list" id="step-list"></div>
+    <div class="step-visual">
+      <div class="step-num" id="step-num">01 / 06</div>
+      <div class="step-title" id="step-title"></div>
+      <p id="step-body"></p>
+      <div class="artifact" id="artifact"></div>
+    </div>
+  </div>
 </section>
 
 <!-- PIPELINE -->
@@ -141,7 +244,7 @@
     <div class="email">
       <div class="email-head">
         <div><span class="muted">To</span> maya@northwind.ai</div>
-        <div><span class="muted">Subject</span> Northwind × SuperOptimal — your sponsor page</div>
+        <div><span class="muted">Subject</span> Northwind × Your Events — your sponsor page</div>
       </div>
       <div class="email-body">
         <p>Hi Maya,</p>
@@ -150,7 +253,7 @@
         <p><a class="pill-link" href="#luma">superoptimal.events/northwind →</a></p>
         <p>Worth a 20-minute call to walk through the sponsor kit?</p>
         <p><a class="btn" href="#" data-book>Book a time</a></p>
-        <p class="muted small">— Diego, SuperOptimal</p>
+        <p class="muted small">— Alex, Your Events</p>
       </div>
       <div class="email-tags"><span>personalised: SDK launch</span><span>ICP: AI infra</span><span>no pricing</span></div>
     </div>
@@ -158,12 +261,12 @@
     <div class="luma" id="luma">
       <div class="luma-cover">
         <div class="luma-cover-inner">
-          <span>SuperOptimal × Northwind AI</span>
+          <span>Your Events × Northwind AI</span>
           <strong>Shipping Agents<br/>to Production</strong>
         </div>
       </div>
       <div class="luma-body">
-        <div class="luma-presented">Presented by <b>Northwind AI</b> · Hosted by SuperOptimal</div>
+        <div class="luma-presented">Presented by <b>Northwind AI</b> · Hosted by Your Events</div>
         <h3>Shipping Agents to Production — Hands-on Workshop</h3>
         <div class="luma-meta">
           <div><b>Thu, Jan 15</b><span>6:00 – 9:00 PM PST</span></div>
@@ -201,28 +304,12 @@
   <div class="marquee reverse"><div class="track" id="track2"></div></div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section class="section" id="how-it-works">
-  <div class="center narrow">
-    <h2>From reply to booked call</h2>
-  </div>
-  <div class="steps">
-    <div class="step-list" id="step-list"></div>
-    <div class="step-visual">
-      <div class="step-num" id="step-num">01 / 06</div>
-      <div class="step-title" id="step-title"></div>
-      <p id="step-body"></p>
-      <div class="graph" id="graph"></div>
-    </div>
-  </div>
-</section>
-
 <!-- TEAM -->
 <section class="section" id="enterprise">
   <div class="ent">
     <div>
-      <h2>Built for event &amp; sponsorship teams.</h2>
-      <p class="lede left">Workshops, webinars, meetups and print. Sell series, not one-offs.</p>
+      <h2>Built for sales &amp; partnerships teams.</h2>
+      <p class="lede left">Bring the sources your pipeline depends on. We decompose and maintain them.</p>
       <a class="btn btn-lg" href="#" data-book>Book a call ↗</a>
     </div>
     <ol class="ent-list">

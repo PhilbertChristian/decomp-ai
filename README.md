@@ -15,10 +15,12 @@ python3 -m http.server 8765
 Then open http://localhost:8765.
 
 ## Sections
-- Hero: Pipedrive leads in, emails and sponsor pages out
-- Pipeline: Pipedrive "Replied" stage → enrichment code
-- Animated comparison vs. doing it by hand (enrich, email two, sponsor page, series pitch)
-- Outputs: sample phase-two email + Luma-style sponsor page
-- Source function catalog, 6-step flow, team section, FAQ
+- Hero and intro: why browser agents are slow and expensive
+- **How it works**:
+  - Layers: pixels → 2.4 MB page → 3 KB data request (what decomposing actually targets)
+  - Same question, two paths: browser agent (8 LLM calls, ~52k tokens) vs. decomposed (2 LLM calls, ~1.2k tokens)
+  - Where the savings come from + monthly cost calculator (illustrative estimates)
+  - Build pipeline with real artifacts: Capture → Map → Clean → Name → Assemble → Run
+- Lead-enrichment pipeline example, animated comparison, sample outputs, function catalog, FAQ
 
-All companies and people shown are fictional demo data.
+All companies, people and numbers shown are illustrative demo data.
