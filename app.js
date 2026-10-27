@@ -517,7 +517,7 @@ const keys = KEYS.map((label, i) => {
 
 $("iso-prog").innerHTML = STEPS.map((_, i) => `<button aria-label="Step ${i + 1}" data-i="${i}"></button>`).join("");
 let isoStep = 0, isoTimer, isoRun = 0, packetTimer;
-document.querySelectorAll("#iso-prog button").forEach((b) => b.addEventListener("click", () => { clearInterval(isoTimer); setIso(+b.dataset.i); }));
+document.querySelectorAll("#iso-prog button").forEach((b) => b.addEventListener("click", () => setIso(+b.dataset.i)));
 
 function placeNodes(step) {
   dnodes.forEach((n) => {
@@ -558,6 +558,8 @@ async function setIso(i) {
   $("iso-title").textContent = STEPS[i][0];
   $("iso-body").textContent = STEPS[i][1];
   document.querySelectorAll("#iso-prog button").forEach((b, j) => { b.classList.toggle("on", j === i); b.classList.toggle("done", j < i); });
+  $("iso-prev").disabled = i === 0;
+  $("iso-next").disabled = i === STEPS.length - 1;
   clearInterval(packetTimer);
   board.querySelectorAll(".packet").forEach((p) => p.remove());
 
@@ -582,8 +584,18 @@ async function setIso(i) {
     term.insertAdjacentHTML("beforeend", '<div class="term-line">&gt; _</div>');
   }
 }
+// no autoplay: each step's animation runs when you step to it
+const goIso = (i) => { if (i >= 0 && i < STEPS.length) setIso(i); };
+$("iso-prev").addEventListener("click", () => goIso(isoStep - 1));
+$("iso-next").addEventListener("click", () => goIso(isoStep + 1));
+let howVisible = false;
+new IntersectionObserver((e) => (howVisible = e[0].isIntersecting), { threshold: 0.4 }).observe($("how"));
+document.addEventListener("keydown", (e) => {
+  if (!howVisible || e.target.closest("input, textarea")) return;
+  if (e.key === "ArrowRight") { goIso(isoStep + 1); e.preventDefault(); }
+  if (e.key === "ArrowLeft") { goIso(isoStep - 1); e.preventDefault(); }
+});
 setIso(0);
-isoTimer = setInterval(() => setIso((isoStep + 1) % STEPS.length), 5200);
 
 // ---------------------------------------------------------------------------
 // Copy button

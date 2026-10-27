@@ -169,7 +169,12 @@
         <div class="iso-num" id="iso-num">01 / 06</div>
         <h3 id="iso-title"></h3>
         <p id="iso-body"></p>
-        <div class="iso-prog" id="iso-prog"></div>
+        <div class="stepper-nav">
+          <button class="arrow" id="iso-prev" aria-label="Previous step">←</button>
+          <div class="iso-prog" id="iso-prog"></div>
+          <button class="arrow" id="iso-next" aria-label="Next step">→</button>
+        </div>
+        <div class="muted small st-hint">Press → to run the next step</div>
       </div>
       <div class="iso-stage"><div class="iso-scene">
         <div class="board" id="board" data-step="0">
