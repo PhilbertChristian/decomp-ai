@@ -317,6 +317,122 @@ async function race(i) {
 new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { race(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("race"));
 
 // ---------------------------------------------------------------------------
+// Lead enrichment
+// ---------------------------------------------------------------------------
+const LEADS = [
+  {
+    tab: "DTC brand", name: "Northwind Coffee Co.", domain: "northwindcoffee.com", logo: "N", color: "#6b4a2f",
+    calls: [
+      { s: "amazon", fn: "getSeller", res: "42 products · 4.6★ · #3 in Ground Coffee", fields: [["Amazon", "42 products · 4.6★"], ["Best-seller rank", "#3 Ground Coffee"]] },
+      { s: "youtube", fn: "getChannel", res: "38.2K subscribers · uploaded 3 days ago", fields: [["YouTube", "38.2K subs · active"]] },
+      { s: "maps", fn: "searchPlaces", res: "3 cafés in Portland, OR · 4.7★ (1,240 reviews)", fields: [["Locations", "3 cafés · Portland, OR"], ["Google rating", "4.7★ · 1,240 reviews"]] },
+      { s: "calendly", fn: "findProfiles", res: "Dana Ruiz, Founder · 30-min intro link", fields: [["Decision maker", "Dana Ruiz, Founder"], ["Book a call", "calendly.com/dana-northwind"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
+    ],
+    signal: ["Signal", "Opened 3rd café in Sep"], score: 92, secs: 1.8, cost: 0.03,
+  },
+  {
+    tab: "Hotel", name: "Kyoto Garden Hotel", domain: "kyotogardenhotel.jp", logo: "K", color: "#2f7d6d",
+    calls: [
+      { s: "expedia", fn: "getHotel", res: "4.4★ · 86 rooms · from $184/night", fields: [["Expedia", "4.4★ · from $184/night"], ["Size", "86 rooms"]] },
+      { s: "maps", fn: "getPlace", res: "Shimogyo, Kyoto · 4.5★ (2,310 reviews)", fields: [["Google rating", "4.5★ · 2,310 reviews"], ["Address", "Shimogyo, Kyoto"]] },
+      { s: "youtube", fn: "search", res: "14 videos mention it · 1.1M total views", fields: [["YouTube buzz", "14 videos · 1.1M views"]] },
+      { s: "calendly", fn: "findProfiles", res: "Kenji Mori, General Manager", fields: [["Decision maker", "Kenji Mori, GM"], ["Book a call", "calendly.com/kenji-kgh"]] },
+      { s: "amazon", fn: "getSeller", skip: "no storefront, skipped" },
+    ],
+    signal: ["Signal", "Reviews mention slow check-in"], score: 86, secs: 2.1, cost: 0.03,
+  },
+  {
+    tab: "Local clinic", name: "Bright Smile Dental", domain: "brightsmile.dental", logo: "B", color: "#006bff",
+    calls: [
+      { s: "maps", fn: "getPlace", res: "Austin, TX · 4.8★ (612 reviews) · open Sat", fields: [["Google rating", "4.8★ · 612 reviews"], ["Address", "South Lamar, Austin TX"]] },
+      { s: "maps", fn: "listReviews", res: "Top theme: \"hard to get an appointment\"", fields: [["Pain point", "Hard to book appointments"]] },
+      { s: "calendly", fn: "getAvailability", res: "Booking page found · 3 slots this week", fields: [["Booking", "3 slots this week"], ["Decision maker", "Dr. Priya Shah, Owner"]] },
+      { s: "youtube", fn: "getChannel", res: "1.2K subscribers · patient education videos", fields: [["YouTube", "1.2K subs"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
+    ],
+    signal: ["Signal", "Booking demand > capacity"], score: 89, secs: 1.6, cost: 0.02,
+  },
+];
+
+$("lead-tabs").innerHTML = LEADS.map((l, i) => `<button class="${i === 0 ? "active" : ""}" data-i="${i}">${l.tab}</button>`).join("");
+document.querySelectorAll("#lead-tabs button").forEach((b) => b.addEventListener("click", () => enrich(+b.dataset.i)));
+
+let leadRun = 0;
+const siteIco = (k) => {
+  const s = SITES[k];
+  const inner = k === "youtube" || k === "maps" ? ICONS[k] : `<span style="display:grid;color:${s.dark ? "#1c1c1a" : "#fff"}">${ICONS[k]}</span>`;
+  return `<span class="ico" style="background:${s.color}">${inner}</span>`;
+};
+
+async function enrich(i) {
+  const run = ++leadRun;
+  const L = LEADS[i];
+  document.querySelectorAll("#lead-tabs button").forEach((b, j) => b.classList.toggle("active", j === i));
+  $("lead-in").innerHTML = `<div class="logo" style="background:${L.color}">${L.logo}</div><b>${esc(L.name)}</b><span>${esc(L.domain)}</span><div class="empty"><i></i><i></i><i></i></div>`;
+  $("lead-code").innerHTML = `<span class="k">const</span> lead = <span class="k">await</span>\n  decompose.enrich({\n    company: <span class="s">"${esc(L.name)}"</span>,\n    domain: <span class="s">"${esc(L.domain)}"</span>\n  })\n<span class="c">// → 5 calls, in parallel</span>`;
+  $("lead-calls").innerHTML = L.calls.map((c) =>
+    `<div class="call-row wait"><div class="call-top">${siteIco(c.s)}<span>${SITES[c.s].key}.${c.fn}()</span><span class="st">queued</span></div><div class="call-res"></div></div>`
+  ).join("");
+  const allFields = [...L.calls.flatMap((c) => (c.fields || []).map((f) => [...f, SITES[c.s].color])), [...L.signal, "var(--accent)"]];
+  $("lead-record").innerHTML = `<div class="rec-head"><b>${esc(L.name)}</b><span class="score" id="lead-score">fit score –</span></div>` +
+    allFields.map(([k]) => `<div class="rec-row"><span class="k">${esc(k)}</span><span class="v ph"></span><span class="src"></span></div>`).join("");
+  $("lead-fields").textContent = "0"; $("lead-time").textContent = "0.0s"; $("lead-cost").textContent = "$0.00"; $("lead-timer").textContent = "0.0s";
+
+  const t0 = performance.now();
+  const total = L.secs * 1000;
+  const tick = () => {
+    if (run !== leadRun) return;
+    const s = Math.min((performance.now() - t0) / 1000, L.secs);
+    $("lead-timer").textContent = s.toFixed(1) + "s";
+    $("lead-time").textContent = s.toFixed(1) + "s";
+    $("lead-cost").textContent = "$" + (L.cost * s / L.secs).toFixed(2);
+    if (s < L.secs) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+
+  const rows = [...document.querySelectorAll("#lead-calls .call-row")];
+  const recRows = [...document.querySelectorAll("#lead-record .rec-row")];
+  let filled = 0;
+  // all calls start together (parallel), then finish one by one
+  await sleep(150);
+  rows.forEach((r, j) => { if (!L.calls[j].skip) { r.className = "call-row run"; r.querySelector(".st").textContent = "running…"; } });
+  const per = (total - 300) / L.calls.length;
+  for (let j = 0; j < L.calls.length; j++) {
+    await sleep(per);
+    if (run !== leadRun) return;
+    const c = L.calls[j], r = rows[j];
+    if (c.skip) {
+      r.className = "call-row skip"; r.querySelector(".st").textContent = "skipped"; r.querySelector(".call-res").textContent = c.skip;
+      continue;
+    }
+    r.className = "call-row done";
+    r.querySelector(".st").textContent = `✓ ${(120 + Math.random() * 300).toFixed(0)} ms`;
+    r.querySelector(".call-res").textContent = c.res;
+    for (const [, v] of c.fields) {
+      const row = recRows[filled];
+      row.querySelector(".v").className = "v";
+      row.querySelector(".v").textContent = v;
+      row.querySelector(".src").style.background = SITES[c.s].color;
+      row.classList.add("filled");
+      filled++;
+      $("lead-fields").textContent = filled;
+    }
+  }
+  await sleep(200);
+  if (run !== leadRun) return;
+  const last = recRows[filled];
+  last.querySelector(".v").className = "v"; last.querySelector(".v").textContent = L.signal[1];
+  last.querySelector(".src").style.background = "var(--accent)"; last.classList.add("filled");
+  $("lead-fields").textContent = ++filled;
+  $("lead-score").textContent = `fit score ${L.score}`;
+  $("lead-score").classList.add("on");
+  $("lead-in").querySelector(".empty").innerHTML = "";
+  $("lead-in").insertAdjacentHTML("beforeend", `<span class="good-c" style="display:block;margin-top:8px">✓ enriched · ${filled} fields</span>`);
+}
+new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { enrich(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("leads"));
+
+// ---------------------------------------------------------------------------
 // Capabilities columns
 // ---------------------------------------------------------------------------
 const EXTRA = [

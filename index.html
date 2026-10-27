@@ -24,6 +24,7 @@
   <nav class="nav-links">
     <a href="#agent">Sites</a>
     <a href="#race">Demo</a>
+    <a href="#leads">Lead enrichment</a>
     <a href="#caps">Functions</a>
     <a href="#how">How it works</a>
   </nav>
@@ -114,6 +115,39 @@
     </div>
   </section>
 
+  <!-- LEAD ENRICHMENT -->
+  <section class="section" id="leads">
+    <div class="center">
+      <div class="eyebrow-y">Use case</div>
+      <h2>Lead enrichment<br/><span class="dimh">in one call.</span></h2>
+      <p class="sub">Give it a company name. Decompose AI calls every relevant site in parallel and hands back a CRM-ready record in seconds, not 15 minutes of tab-switching.</p>
+      <div class="lead-tabs" id="lead-tabs"></div>
+    </div>
+
+    <div class="enrich">
+      <div class="enrich-col">
+        <div class="col-label">1 · Lead in</div>
+        <div class="lead-in" id="lead-in"></div>
+        <pre class="code-mini" id="lead-code"></pre>
+      </div>
+      <div class="enrich-col">
+        <div class="col-label">2 · Sites called <span class="muted" id="lead-timer">0.0s</span></div>
+        <div class="calls" id="lead-calls"></div>
+      </div>
+      <div class="enrich-col">
+        <div class="col-label">3 · Enriched record</div>
+        <div class="record" id="lead-record"></div>
+      </div>
+    </div>
+
+    <div class="enrich-foot">
+      <div><b id="lead-fields">0</b><span>fields filled</span></div>
+      <div><b id="lead-time">0.0s</b><span>vs ~15 min by hand</span></div>
+      <div><b id="lead-cost">$0.00</b><span>per lead</span></div>
+      <div class="sync"><span>Synced to</span><i>HubSpot</i><i>Salesforce</i><i>Pipedrive</i><i>Sheets</i></div>
+    </div>
+  </section>
+
   <!-- 4. CAPABILITIES -->
   <section class="section" id="caps">
     <div class="center">
@@ -137,7 +171,7 @@
         <p id="iso-body"></p>
         <div class="iso-prog" id="iso-prog"></div>
       </div>
-      <div class="iso-scene">
+      <div class="iso-stage"><div class="iso-scene">
         <div class="board" id="board" data-step="0">
           <div class="board-edge"></div>
           <div class="monitor"><div class="mon-screen"><div class="mon-bar"><i></i><i></i><i></i><span></span></div><div class="mon-rows"><b></b><b></b><b></b><b class="short"></b></div></div></div>
@@ -150,7 +184,7 @@
           <div class="pad" id="pad"></div>
           <div class="term"><div class="term-screen"><div class="term-head">Node · Decompose Library</div><div id="term-lines"></div></div></div>
         </div>
-      </div>
+      </div></div>
     </div>
   </section>
 

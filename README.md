@@ -18,6 +18,7 @@ Then open http://localhost:8765.
 - Hero with fanned site cards (YouTube, Amazon, Expedia, Calendly, Google Maps); click one to see it in code
 - `agent.ts` panel that types a real-looking call for each site and shows the result
 - Race: the same task done by Decompose AI vs. a browser agent, with live time, tokens and cost (5 tasks)
+- **Lead enrichment**: company name in → parallel calls to the five sites → CRM-ready record with fit score (DTC brand, hotel, local clinic examples)
 - "Every capability. One import.": auto-scrolling function catalog
 - "How a website becomes functions": animated isometric desk scene through 6 steps (Capture → Run natively)
 
