@@ -317,41 +317,60 @@ async function race(i) {
 new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { race(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("race"));
 
 // ---------------------------------------------------------------------------
-// Lead enrichment
+// Lead generation
 // ---------------------------------------------------------------------------
 const LEADS = [
   {
-    tab: "DTC brand", name: "Northwind Coffee Co.", domain: "northwindcoffee.com", logo: "N", color: "#6b4a2f",
+    tab: "Software", name: "B2B SaaS", logo: "S", color: "#3d5afe",
+    desc: "Series B+ · US · hiring sales",
+    query: { industry: "B2B SaaS", stage: "Series B+", signal: "hiring sales" },
     calls: [
-      { s: "amazon", fn: "getSeller", res: "42 products · 4.6★ · #3 in Ground Coffee", fields: [["Amazon", "42 products · 4.6★"], ["Best-seller rank", "#3 Ground Coffee"]] },
-      { s: "youtube", fn: "getChannel", res: "38.2K subscribers · uploaded 3 days ago", fields: [["YouTube", "38.2K subs · active"]] },
-      { s: "maps", fn: "searchPlaces", res: "3 cafés in Portland, OR · 4.7★ (1,240 reviews)", fields: [["Locations", "3 cafés · Portland, OR"], ["Google rating", "4.7★ · 1,240 reviews"]] },
-      { s: "calendly", fn: "findProfiles", res: "Dana Ruiz, Founder · 30-min intro link", fields: [["Decision maker", "Dana Ruiz, Founder"], ["Book a call", "calendly.com/dana-northwind"]] },
-      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
+      { s: "youtube", fn: "search", res: "SaaS channels posting product demos · 2 match", fields: [["Notion", "Head of Sales · demo videos"], ["Linear", "Head of Growth · changelog videos"]] },
+      { s: "calendly", fn: "findProfiles", res: "Sales teams with public demo links · 2 match", fields: [["Retool", "VP Sales · book a demo"], ["Vercel", "Enterprise AE · intro call"]] },
+      { s: "maps", fn: "searchPlaces", res: "SaaS offices in New York · 1 match", fields: [["Ramp", "VP Sales · NYC HQ"]] },
+      { s: "amazon", fn: "listBestSellers", res: "Top Business Software listings · 1 match", fields: [["Intuit", "Partnerships lead · QuickBooks"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
     ],
-    signal: ["Signal", "Opened 3rd café in Sep"], score: 92, secs: 1.8, cost: 0.03,
+    signal: ["Next step", "6 contacts ready to email"], score: 88, secs: 1.9, cost: 0.03,
   },
   {
-    tab: "Hotel", name: "Kyoto Garden Hotel", domain: "kyotogardenhotel.jp", logo: "K", color: "#2f7d6d",
+    tab: "Marketing agency", name: "Marketing agencies", logo: "M", color: "#d9482b",
+    desc: "US · creative & digital · 200+ staff",
+    query: { industry: "Marketing agency", country: "US", size: "200+" },
     calls: [
-      { s: "expedia", fn: "getHotel", res: "4.4★ · 86 rooms · from $184/night", fields: [["Expedia", "4.4★ · from $184/night"], ["Size", "86 rooms"]] },
-      { s: "maps", fn: "getPlace", res: "Shimogyo, Kyoto · 4.5★ (2,310 reviews)", fields: [["Google rating", "4.5★ · 2,310 reviews"], ["Address", "Shimogyo, Kyoto"]] },
-      { s: "youtube", fn: "search", res: "14 videos mention it · 1.1M total views", fields: [["YouTube buzz", "14 videos · 1.1M views"]] },
-      { s: "calendly", fn: "findProfiles", res: "Kenji Mori, General Manager", fields: [["Decision maker", "Kenji Mori, GM"], ["Book a call", "calendly.com/kenji-kgh"]] },
+      { s: "maps", fn: "searchPlaces", res: "Agency offices in New York · 2 match", fields: [["VaynerMedia", "Head of Partnerships · NYC"], ["R/GA", "New Business Director · NYC"]] },
+      { s: "youtube", fn: "search", res: "Agency channels with case-study videos · 1 match", fields: [["Ogilvy", "Head of New Business · case studies"]] },
+      { s: "calendly", fn: "findProfiles", res: "Agencies taking discovery calls · 2 match", fields: [["Huge", "Growth Director · discovery call"], ["Wieden+Kennedy", "New Business lead · Portland"]] },
+      { s: "amazon", fn: "getSeller", skip: "not relevant for this search, skipped" },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
+    ],
+    signal: ["Next step", "5 contacts ready to email"], score: 84, secs: 1.7, cost: 0.02,
+  },
+  {
+    tab: "E-commerce", name: "DTC brands", logo: "E", color: "#6b4a2f",
+    desc: "Apparel, home & beauty · US",
+    query: { industry: "DTC e-commerce", category: "apparel, home, beauty" },
+    calls: [
+      { s: "amazon", fn: "listBestSellers", res: "DTC brands selling on Amazon · 2 match", fields: [["Liquid Death", "Head of E-commerce · Amazon store"], ["Brooklinen", "Director of Growth · Amazon store"]] },
+      { s: "youtube", fn: "search", res: "Brand channels with product videos · 1 match", fields: [["Glossier", "Head of Brand · beauty tutorials"]] },
+      { s: "calendly", fn: "findProfiles", res: "Brands taking partnership calls · 1 match", fields: [["Away", "Partnerships lead · intro call"]] },
+      { s: "maps", fn: "searchPlaces", res: "Online brands with retail stores · 2 match", fields: [["Allbirds", "Retail Director · US stores"], ["Warby Parker", "Head of Retail · US stores"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
+    ],
+    signal: ["Next step", "6 contacts ready to email"], score: 90, secs: 1.8, cost: 0.03,
+  },
+  {
+    tab: "Local services", name: "Clinics & hotels", logo: "L", color: "#2f7d6d",
+    desc: "Multi-location · online booking",
+    query: { industry: "Clinics, hotels", signal: "multi-location" },
+    calls: [
+      { s: "maps", fn: "searchNearby", res: "Multi-location clinics in Austin · 2 match", fields: [["One Medical", "Regional Ops Director · Austin"], ["Aspen Dental", "Practice Development · Austin"]] },
+      { s: "expedia", fn: "searchHotels", res: "Design-led hotel groups · 2 match", fields: [["Ace Hotel", "Director of Sales · Kyoto"], ["The Hoxton", "Commercial Director · Chicago"]] },
+      { s: "calendly", fn: "getAvailability", res: "Brands with online booking pages · 1 match", fields: [["Equinox", "Head of Partnerships · NYC"]] },
+      { s: "youtube", fn: "getChannel", res: "Channels with patient & guest videos · 1 match", fields: [["Mayo Clinic", "Marketing Director · health videos"]] },
       { s: "amazon", fn: "getSeller", skip: "no storefront, skipped" },
     ],
-    signal: ["Signal", "Reviews mention slow check-in"], score: 86, secs: 2.1, cost: 0.03,
-  },
-  {
-    tab: "Local clinic", name: "Bright Smile Dental", domain: "brightsmile.dental", logo: "B", color: "#006bff",
-    calls: [
-      { s: "maps", fn: "getPlace", res: "Austin, TX · 4.8★ (612 reviews) · open Sat", fields: [["Google rating", "4.8★ · 612 reviews"], ["Address", "South Lamar, Austin TX"]] },
-      { s: "maps", fn: "listReviews", res: "Top theme: \"hard to get an appointment\"", fields: [["Pain point", "Hard to book appointments"]] },
-      { s: "calendly", fn: "getAvailability", res: "Booking page found · 3 slots this week", fields: [["Booking", "3 slots this week"], ["Decision maker", "Dr. Priya Shah, Owner"]] },
-      { s: "youtube", fn: "getChannel", res: "1.2K subscribers · patient education videos", fields: [["YouTube", "1.2K subs"]] },
-      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
-    ],
-    signal: ["Signal", "Booking demand > capacity"], score: 89, secs: 1.6, cost: 0.02,
+    signal: ["Next step", "6 contacts ready to email"], score: 86, secs: 1.6, cost: 0.02,
   },
 ];
 
@@ -369,13 +388,15 @@ async function enrich(i) {
   const run = ++leadRun;
   const L = LEADS[i];
   document.querySelectorAll("#lead-tabs button").forEach((b, j) => b.classList.toggle("active", j === i));
-  $("lead-in").innerHTML = `<div class="logo" style="background:${L.color}">${L.logo}</div><b>${esc(L.name)}</b><span>${esc(L.domain)}</span><div class="empty"><i></i><i></i><i></i></div>`;
-  $("lead-code").innerHTML = `<span class="k">const</span> lead = <span class="k">await</span>\n  decomp.enrich({\n    company: <span class="s">"${esc(L.name)}"</span>,\n    domain: <span class="s">"${esc(L.domain)}"</span>\n  })\n<span class="c">// → 5 calls, in parallel</span>`;
+  const live = L.calls.filter((c) => !c.skip).length;
+  const args = Object.entries(L.query).map(([k, v]) => `    ${k}: <span class="s">${typeof v === "number" ? v : `"${esc(v)}"`}</span>`).join(",\n");
+  $("lead-in").innerHTML = `<div class="logo" style="background:${L.color}">${L.logo}</div><b>${esc(L.name)}</b><span>${esc(L.desc)}</span><div class="empty"><i></i><i></i><i></i></div>`;
+  $("lead-code").innerHTML = `<span class="k">const</span> leads = <span class="k">await</span>\n  decomp.findLeads({\n${args}\n  })\n<span class="c">// → ${live} calls, in parallel</span>`;
   $("lead-calls").innerHTML = L.calls.map((c) =>
     `<div class="call-row wait"><div class="call-top">${siteIco(c.s)}<span>${SITES[c.s].key}.${c.fn}()</span><span class="st">queued</span></div><div class="call-res"></div></div>`
   ).join("");
   const allFields = [...L.calls.flatMap((c) => (c.fields || []).map((f) => [...f, SITES[c.s].color])), [...L.signal, "var(--accent)"]];
-  $("lead-record").innerHTML = `<div class="rec-head"><b>${esc(L.name)}</b><span class="score" id="lead-score">fit score –</span></div>` +
+  $("lead-record").innerHTML = `<div class="rec-head"><b>${esc(L.name)} leads</b><span class="score" id="lead-score">avg fit –</span></div>` +
     allFields.map(([k]) => `<div class="rec-row"><span class="k">${esc(k)}</span><span class="v ph"></span><span class="src"></span></div>`).join("");
   $("lead-fields").textContent = "0"; $("lead-time").textContent = "0.0s"; $("lead-cost").textContent = "$0.00"; $("lead-timer").textContent = "0.0s";
 
@@ -424,11 +445,10 @@ async function enrich(i) {
   const last = recRows[filled];
   last.querySelector(".v").className = "v"; last.querySelector(".v").textContent = L.signal[1];
   last.querySelector(".src").style.background = "var(--accent)"; last.classList.add("filled");
-  $("lead-fields").textContent = ++filled;
-  $("lead-score").textContent = `fit score ${L.score}`;
+  $("lead-score").textContent = `avg fit ${L.score}`;
   $("lead-score").classList.add("on");
   $("lead-in").querySelector(".empty").innerHTML = "";
-  $("lead-in").insertAdjacentHTML("beforeend", `<span class="good-c" style="display:block;margin-top:8px">✓ enriched · ${filled} fields</span>`);
+  $("lead-in").insertAdjacentHTML("beforeend", `<span class="good-c" style="display:block;margin-top:8px">✓ ${filled} leads found</span>`);
 }
 new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { enrich(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("leads"));
 
