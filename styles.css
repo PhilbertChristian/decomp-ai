@@ -409,7 +409,7 @@ html, body { overflow-x: clip; }
 .rec-head b { font-weight: 500; }
 .score { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--panel); color: var(--muted); transition: background .3s, color .3s; }
 .score.on { background: var(--accent); color: #fff; }
-.rec-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; padding: 7px 14px; border-bottom: 1px dashed var(--line); font-size: 13px; }
+.rec-row { display: grid; grid-template-columns: 110px 1fr auto; gap: 10px; align-items: center; padding: 7px 14px; border-bottom: 1px dashed var(--line); font-size: 13px; }
 .rec-row:last-child { border-bottom: 0; }
 .rec-row .k { color: var(--muted); font-size: 12px; }
 .rec-row .v { min-height: 18px; }

@@ -18,7 +18,7 @@ Then open http://localhost:8765.
 - Hero with fanned site cards (YouTube, Amazon, Expedia, Calendly, Google Maps); click one to see it in code
 - `agent.ts` panel that types a real-looking call for each site and shows the result
 - Race: the same task done by Decomp AI vs. a browser agent, with live time, tokens and cost (5 tasks)
-- **Lead generation**: describe a target customer → parallel calls to the five sites → CRM-ready list of companies and contacts with a fit score (software, marketing agency, e-commerce, local services examples)
+- **Lead generation**: a real company in (SAP, Notion, VaynerMedia, Liquid Death, The Hoxton, One Medical) → parallel calls to the five sites → CRM-ready lead with decision maker, signals and a fit score
 - "Every capability. One import.": auto-scrolling function catalog
 - "How a website becomes functions": animated isometric desk scene through 6 steps (Capture → Run natively)
 

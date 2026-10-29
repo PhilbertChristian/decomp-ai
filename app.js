@@ -321,56 +321,70 @@ new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { race(0); o.disco
 // ---------------------------------------------------------------------------
 const LEADS = [
   {
-    tab: "Software", name: "B2B SaaS", logo: "S", color: "#3d5afe",
-    desc: "Series B+ · US · hiring sales",
-    query: { industry: "B2B SaaS", stage: "Series B+", signal: "hiring sales" },
+    tab: "Enterprise software", name: "SAP", domain: "sap.com", logo: "S", color: "#0a6ed1",
     calls: [
-      { s: "youtube", fn: "search", res: "SaaS channels posting product demos · 2 match", fields: [["Notion", "Ivan Zhao, CEO · demo videos"], ["Linear", "Karri Saarinen, CEO · changelog videos"]] },
-      { s: "calendly", fn: "findProfiles", res: "Sales teams with public demo links · 2 match", fields: [["Retool", "David Hsu, CEO · book a demo"], ["Vercel", "Guillermo Rauch, CEO · intro call"]] },
-      { s: "maps", fn: "searchPlaces", res: "SaaS offices in New York · 1 match", fields: [["Ramp", "Eric Glyman, CEO · NYC HQ"]] },
-      { s: "amazon", fn: "listBestSellers", res: "Top Business Software listings · 1 match", fields: [["Intuit", "Sasan Goodarzi, CEO · QuickBooks"]] },
-      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
+      { s: "maps", fn: "searchPlaces", res: "HQ in Walldorf, Germany · US HQ in Newtown Square, PA", fields: [["HQ", "Walldorf, Germany"], ["US office", "Newtown Square, PA"]] },
+      { s: "youtube", fn: "getChannel", res: "Official SAP channel · keynotes and product demos", fields: [["YouTube", "Official channel · keynotes"]] },
+      { s: "amazon", fn: "searchProducts", res: "SAP PRESS books and training guides", fields: [["Amazon", "SAP PRESS books & guides"]] },
+      { s: "calendly", fn: "findProfiles", res: "Christian Klein, CEO · demo requests via sap.com", fields: [["Decision maker", "Christian Klein, CEO"], ["Book a call", "Demo request on sap.com"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
     ],
-    signal: ["Next step", "6 contacts ready to email"], score: 88, secs: 1.9, cost: 0.03,
+    signal: ["Signal", "Pushing Business AI (Joule)"], score: 91, secs: 1.9, cost: 0.03,
   },
   {
-    tab: "Marketing agency", name: "Marketing agencies", logo: "M", color: "#d9482b",
-    desc: "US · creative & digital · 200+ staff",
-    query: { industry: "Marketing agency", country: "US", size: "200+" },
+    tab: "SaaS", name: "Notion", domain: "notion.com", logo: "N", color: "#191919",
     calls: [
-      { s: "maps", fn: "searchPlaces", res: "Agency offices in New York · 2 match", fields: [["VaynerMedia", "Gary Vaynerchuk, CEO · NYC"], ["R/GA", "Bob Greenberg, Founder · NYC"]] },
-      { s: "youtube", fn: "search", res: "Agency channels with case-study videos · 1 match", fields: [["Ogilvy", "Devika Bulchandani, CEO · case studies"]] },
-      { s: "calendly", fn: "findProfiles", res: "Agency founders with public profiles · 2 match", fields: [["Huge", "Aaron Shapiro, Co-founder · Brooklyn"], ["Droga5", "David Droga, Founder · NYC"]] },
-      { s: "amazon", fn: "getSeller", skip: "not relevant for this search, skipped" },
-      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
+      { s: "youtube", fn: "getChannel", res: "Official Notion channel · templates and tutorials", fields: [["YouTube", "Official channel · tutorials"]] },
+      { s: "maps", fn: "searchPlaces", res: "HQ in San Francisco, CA", fields: [["HQ", "San Francisco, CA"]] },
+      { s: "calendly", fn: "findProfiles", res: "Ivan Zhao, Co-founder & CEO", fields: [["Decision maker", "Ivan Zhao, Co-founder & CEO"], ["Book a call", "Sales form on notion.com"]] },
+      { s: "amazon", fn: "getSeller", skip: "no storefront, skipped" },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
     ],
-    signal: ["Next step", "5 contacts ready to email"], score: 84, secs: 1.7, cost: 0.02,
+    signal: ["Signal", "Launched Notion Mail & Notion AI"], score: 89, secs: 1.7, cost: 0.02,
   },
   {
-    tab: "E-commerce", name: "DTC brands", logo: "E", color: "#6b4a2f",
-    desc: "Apparel, home & beauty · US",
-    query: { industry: "DTC e-commerce", category: "apparel, home, beauty" },
+    tab: "Agency", name: "VaynerMedia", domain: "vaynermedia.com", logo: "V", color: "#e4002b",
     calls: [
-      { s: "amazon", fn: "listBestSellers", res: "DTC brands selling on Amazon · 2 match", fields: [["Liquid Death", "Mike Cessario, CEO · Amazon store"], ["Brooklinen", "Rich Fulop, Co-founder · Amazon store"]] },
-      { s: "youtube", fn: "search", res: "Brand channels with product videos · 1 match", fields: [["Glossier", "Emily Weiss, Founder · beauty tutorials"]] },
-      { s: "calendly", fn: "findProfiles", res: "Brands taking partnership calls · 1 match", fields: [["Away", "Jen Rubio, Co-founder · intro call"]] },
-      { s: "maps", fn: "searchPlaces", res: "Online brands with retail stores · 2 match", fields: [["Allbirds", "Tim Brown, Co-founder · US stores"], ["Warby Parker", "Neil Blumenthal, Co-CEO · US stores"]] },
-      { s: "expedia", fn: "searchHotels", skip: "not relevant for this search, skipped" },
+      { s: "maps", fn: "searchPlaces", res: "HQ in New York, NY", fields: [["HQ", "New York, NY"]] },
+      { s: "youtube", fn: "getChannel", res: "GaryVee channel · daily short-form content", fields: [["YouTube", "GaryVee · daily videos"]] },
+      { s: "amazon", fn: "searchProducts", res: "Books by Gary Vaynerchuk · Crushing It!, Jab, Jab…", fields: [["Amazon", "Gary's books · Crushing It!"]] },
+      { s: "calendly", fn: "findProfiles", res: "Gary Vaynerchuk, Co-founder & CEO", fields: [["Decision maker", "Gary Vaynerchuk, CEO"], ["Book a call", "New business form on site"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
     ],
-    signal: ["Next step", "6 contacts ready to email"], score: 90, secs: 1.8, cost: 0.03,
+    signal: ["Signal", "Heavy short-form video output"], score: 87, secs: 1.8, cost: 0.03,
   },
   {
-    tab: "Local services", name: "Clinics, gyms & hotels", logo: "L", color: "#2f7d6d",
-    desc: "Multi-location · online booking",
-    query: { industry: "Clinics, hotels", signal: "multi-location" },
+    tab: "DTC brand", name: "Liquid Death", domain: "liquiddeath.com", logo: "L", color: "#1c1c1c",
     calls: [
-      { s: "maps", fn: "searchNearby", res: "Multi-location clinics & gyms · 2 match", fields: [["One Medical", "Tom Lee, Founder · US clinics"], ["Barry's", "Joey Gonzalez, CEO · US studios"]] },
-      { s: "expedia", fn: "searchHotels", res: "Design-led hotel groups · 2 match", fields: [["citizenM", "Rattan Chadha, Founder · global hotels"], ["The Hoxton", "Sharan Pasricha, Founder · Chicago"]] },
-      { s: "calendly", fn: "getAvailability", res: "Brands with online booking pages · 1 match", fields: [["Equinox", "Harvey Spevak, Exec Chair · NYC"]] },
-      { s: "youtube", fn: "getChannel", res: "Channels with patient & guest videos · 1 match", fields: [["Mayo Clinic", "Gianrico Farrugia, CEO · health videos"]] },
+      { s: "amazon", fn: "getSeller", res: "Brand store · mountain water, sparkling & iced tea", fields: [["Amazon", "Brand store · water & tea"]] },
+      { s: "youtube", fn: "getChannel", res: "Official channel · comedy ads and stunts", fields: [["YouTube", "Official channel · comedy ads"]] },
+      { s: "maps", fn: "searchPlaces", res: "HQ in Santa Monica, CA · stocked at Whole Foods, Target, 7-Eleven", fields: [["HQ", "Santa Monica, CA"], ["Retail", "Whole Foods, Target, 7-Eleven"]] },
+      { s: "calendly", fn: "findProfiles", res: "Mike Cessario, Co-founder & CEO", fields: [["Decision maker", "Mike Cessario, CEO"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
+    ],
+    signal: ["Signal", "Expanded into iced tea"], score: 92, secs: 1.8, cost: 0.03,
+  },
+  {
+    tab: "Hotel", name: "The Hoxton", domain: "thehoxton.com", logo: "H", color: "#2f7d6d",
+    calls: [
+      { s: "expedia", fn: "searchHotels", res: "Hotels in London, Paris, Amsterdam, Chicago & more", fields: [["Expedia", "Listed · London, Paris, Chicago…"]] },
+      { s: "maps", fn: "getPlace", res: "The Hoxton, Chicago · Fulton Market", fields: [["US location", "Fulton Market, Chicago"]] },
+      { s: "youtube", fn: "search", res: "Travel vloggers feature its hotels", fields: [["YouTube buzz", "Featured in travel vlogs"]] },
+      { s: "calendly", fn: "findProfiles", res: "Sharan Pasricha, Founder (Ennismore)", fields: [["Decision maker", "Sharan Pasricha, Founder"]] },
       { s: "amazon", fn: "getSeller", skip: "no storefront, skipped" },
     ],
-    signal: ["Next step", "6 contacts ready to email"], score: 86, secs: 1.6, cost: 0.02,
+    signal: ["Signal", "Part of Ennismore (Accor)"], score: 86, secs: 2.1, cost: 0.03,
+  },
+  {
+    tab: "Clinic", name: "One Medical", domain: "onemedical.com", logo: "O", color: "#00594f",
+    calls: [
+      { s: "maps", fn: "searchPlaces", res: "Clinics in NYC, SF, LA, Chicago & more", fields: [["Locations", "NYC, SF, LA, Chicago…"]] },
+      { s: "calendly", fn: "getAvailability", res: "Same-day booking in the One Medical app", fields: [["Booking", "Same-day, in-app"], ["Decision maker", "Tom Lee, Founder"]] },
+      { s: "amazon", fn: "getSeller", res: "Part of Amazon Health Services", fields: [["Amazon", "Amazon Health Services"]] },
+      { s: "youtube", fn: "getChannel", res: "Health explainer videos", fields: [["YouTube", "Health explainers"]] },
+      { s: "expedia", fn: "searchHotels", skip: "not relevant for this lead, skipped" },
+    ],
+    signal: ["Signal", "Owned by Amazon since 2023"], score: 88, secs: 1.6, cost: 0.02,
   },
 ];
 
@@ -388,15 +402,13 @@ async function enrich(i) {
   const run = ++leadRun;
   const L = LEADS[i];
   document.querySelectorAll("#lead-tabs button").forEach((b, j) => b.classList.toggle("active", j === i));
-  const live = L.calls.filter((c) => !c.skip).length;
-  const args = Object.entries(L.query).map(([k, v]) => `    ${k}: <span class="s">${typeof v === "number" ? v : `"${esc(v)}"`}</span>`).join(",\n");
-  $("lead-in").innerHTML = `<div class="logo" style="background:${L.color}">${L.logo}</div><b>${esc(L.name)}</b><span>${esc(L.desc)}</span><div class="empty"><i></i><i></i><i></i></div>`;
-  $("lead-code").innerHTML = `<span class="k">const</span> leads = <span class="k">await</span>\n  decomp.findLeads({\n${args}\n  })\n<span class="c">// → ${live} calls, in parallel</span>`;
+  $("lead-in").innerHTML = `<div class="logo" style="background:${L.color}">${L.logo}</div><b>${esc(L.name)}</b><span>${esc(L.domain)}</span><div class="empty"><i></i><i></i><i></i></div>`;
+  $("lead-code").innerHTML = `<span class="k">const</span> lead = <span class="k">await</span>\n  decomp.enrich({\n    company: <span class="s">"${esc(L.name)}"</span>,\n    domain: <span class="s">"${esc(L.domain)}"</span>\n  })\n<span class="c">// → 5 calls, in parallel</span>`;
   $("lead-calls").innerHTML = L.calls.map((c) =>
     `<div class="call-row wait"><div class="call-top">${siteIco(c.s)}<span>${SITES[c.s].key}.${c.fn}()</span><span class="st">queued</span></div><div class="call-res"></div></div>`
   ).join("");
   const allFields = [...L.calls.flatMap((c) => (c.fields || []).map((f) => [...f, SITES[c.s].color])), [...L.signal, "var(--accent)"]];
-  $("lead-record").innerHTML = `<div class="rec-head"><b>${esc(L.name)} leads</b><span class="score" id="lead-score">avg fit –</span></div>` +
+  $("lead-record").innerHTML = `<div class="rec-head"><b>${esc(L.name)}</b><span class="score" id="lead-score">fit score –</span></div>` +
     allFields.map(([k]) => `<div class="rec-row"><span class="k">${esc(k)}</span><span class="v ph"></span><span class="src"></span></div>`).join("");
   $("lead-fields").textContent = "0"; $("lead-time").textContent = "0.0s"; $("lead-cost").textContent = "$0.00"; $("lead-timer").textContent = "0.0s";
 
@@ -445,10 +457,11 @@ async function enrich(i) {
   const last = recRows[filled];
   last.querySelector(".v").className = "v"; last.querySelector(".v").textContent = L.signal[1];
   last.querySelector(".src").style.background = "var(--accent)"; last.classList.add("filled");
-  $("lead-score").textContent = `avg fit ${L.score}`;
+  $("lead-fields").textContent = ++filled;
+  $("lead-score").textContent = `fit score ${L.score}`;
   $("lead-score").classList.add("on");
   $("lead-in").querySelector(".empty").innerHTML = "";
-  $("lead-in").insertAdjacentHTML("beforeend", `<span class="good-c" style="display:block;margin-top:8px">✓ ${filled} leads found</span>`);
+  $("lead-in").insertAdjacentHTML("beforeend", `<span class="good-c" style="display:block;margin-top:8px">✓ enriched · ${filled} fields</span>`);
 }
 new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { enrich(0); o.disconnect(); } }, { threshold: 0.25 }).observe($("leads"));
 
